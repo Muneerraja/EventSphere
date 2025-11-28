@@ -1,37 +1,78 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { CheckCircle, XCircle, Clock, Search, Filter, Eye, User, Building, Calendar, AlertTriangle } from 'lucide-react';
+import { CheckCircle, XCircle, Clock, Search, Filter, Eye, User, Building, Calendar, AlertTriangle, Building2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 
-const ApprovalsManagement = () => {
+const ExhibitorApprovals = () => {
   const { user } = useAuth();
   const [applications, setApplications] = useState([]);
   const [filteredApplications, setFilteredApplications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchTerm, setSearchTerm] = useState('');
   const [filterStatus, setFilterStatus] = useState('all');
-  const [filterType, setFilterType] = useState('all');
+  const [filterExpo, setFilterExpo] = useState('all');
   const [selectedApplications, setSelectedApplications] = useState([]);
   const [showRejectModal, setShowRejectModal] = useState(false);
   const [rejectReason, setRejectReason] = useState('');
   const [rejectingApplication, setRejectingApplication] = useState(null);
+  const [userExpos, setUserExpos] = useState([]);
 
   useEffect(() => {
-    fetchPendingApplications();
+    fetchUserExpos();
   }, []);
 
   useEffect(() => {
+    if (userExpos.length > 0) {
+      fetchPendingApplications();
+    } else if (userExpos.length === 0) {
+      // If no expos, still stop loading
+      setLoading(false);
+    }
+  }, [userExpos]);
+
+  useEffect(() => {
     filterApplications();
-  }, [applications, searchTerm, filterStatus, filterType]);
+  }, [applications, searchTerm, filterStatus, filterExpo]);
+
+  const fetchUserExpos = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/expos`, { timeout: 5000 });
+      // Admin sees all expos, organizers see only their own
+      const filteredExpos = user.role === 'admin'
+        ? response.data
+        : response.data.filter(expo => expo.organizer === user._id);
+      setUserExpos(filteredExpos);
+    } catch (error) {
+      console.error('Error fetching user expos:', error);
+      setUserExpos([]);
+    }
+  };
 
   const fetchPendingApplications = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/applications/`);
-      setApplications(response.data);
+      console.log('ExhibitorApprovals: Fetching applications...');
+      console.log('ExhibitorApprovals: API URL:', import.meta.env.VITE_API_URL);
+      console.log('ExhibitorApprovals: User expos:', userExpos);
+
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/applications/`, { timeout: 5000 });
+      console.log('ExhibitorApprovals: Raw response data:', response.data);
+
+      // Filter applications to only those for this organizer's expos
+      const organizerApplications = response.data.filter(app => {
+        // Handle different possible structures
+        const expoId = app.expo?.id || app.expo?._id;
+        console.log('ExhibitorApprovals: Checking app:', app.id, 'expoId:', expoId);
+        return userExpos.some(expo => expo._id === expoId);
+      });
+
+      console.log('ExhibitorApprovals: Filtered applications:', organizerApplications);
+      setApplications(organizerApplications);
     } catch (error) {
-      console.error('Error fetching applications:', error);
-      // Set empty array on error
+      console.error('ExhibitorApprovals: Error fetching applications:', error);
+      console.error('ExhibitorApprovals: Error details:', error.response?.data || error.message);
+
+      // Set empty array when no data is available
       setApplications([]);
     } finally {
       setLoading(false);
@@ -44,9 +85,8 @@ const ApprovalsManagement = () => {
     // Filter by search term
     if (searchTerm) {
       filtered = filtered.filter(app =>
-        app.applicant.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        app.expo.title.toLowerCase().includes(searchTerm.toLowerCase()) ||
-        (app.type === 'session' && app.sessionDetails.title.toLowerCase().includes(searchTerm.toLowerCase()))
+        app.applicant?.name?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+        app.expo?.title?.toLowerCase().includes(searchTerm.toLowerCase())
       );
     }
 
@@ -55,9 +95,12 @@ const ApprovalsManagement = () => {
       filtered = filtered.filter(app => app.status === filterStatus);
     }
 
-    // Filter by type
-    if (filterType !== 'all') {
-      filtered = filtered.filter(app => app.type === filterType);
+    // Filter by expo
+    if (filterExpo !== 'all') {
+      filtered = filtered.filter(app => {
+        const expoId = app.expo?.id || app.expo?._id;
+        return expoId === filterExpo;
+      });
     }
 
     setFilteredApplications(filtered);
@@ -103,14 +146,6 @@ const ApprovalsManagement = () => {
     setSelectedApplications([]);
   };
 
-  const handleSelectAll = () => {
-    if (selectedApplications.length === filteredApplications.filter(app => app.status === 'pending').length) {
-      setSelectedApplications([]);
-    } else {
-      setSelectedApplications(filteredApplications.filter(app => app.status === 'pending').map(app => app.id));
-    }
-  };
-
   const getStatusColor = (status) => {
     switch (status) {
       case 'approved': return 'text-green-600 bg-green-50 border-green-200';
@@ -126,15 +161,6 @@ const ApprovalsManagement = () => {
       case 'pending': return <Clock size={16} />;
       case 'rejected': return <XCircle size={16} />;
       default: return <AlertTriangle size={16} />;
-    }
-  };
-
-  const getPriorityColor = (priority) => {
-    switch (priority) {
-      case 'high': return 'bg-red-100 text-red-800';
-      case 'medium': return 'bg-yellow-100 text-yellow-800';
-      case 'low': return 'bg-green-100 text-green-800';
-      default: return 'bg-gray-100 text-gray-800';
     }
   };
 
@@ -154,8 +180,8 @@ const ApprovalsManagement = () => {
         animate={{ opacity: 1, y: 0 }}
         transition={{ duration: 0.5 }}
       >
-        <h1 className="text-3xl font-bold text-gray-900">Approvals Management</h1>
-        <p className="text-gray-600">Review and manage pending exhibitor and session applications</p>
+        <h1 className="text-3xl font-bold text-gray-900">Exhibitor Approvals</h1>
+        <p className="text-gray-600">Review and manage exhibitor applications for your events</p>
       </motion.div>
 
       {/* Stats Cards */}
@@ -228,22 +254,29 @@ const ApprovalsManagement = () => {
             </select>
 
             <select
-              value={filterType}
-              onChange={(e) => setFilterType(e.target.value)}
+              value={filterExpo}
+              onChange={(e) => setFilterExpo(e.target.value)}
               className="px-4 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
-              <option value="all">All Types</option>
-              <option value="exhibitor">Exhibitors</option>
-              <option value="session">Sessions</option>
+              <option value="all">All Events</option>
+              {userExpos.map(expo => (
+                <option key={expo._id} value={expo._id}>{expo.title}</option>
+              ))}
             </select>
           </div>
 
           <div className="flex space-x-3">
             <button
-              onClick={handleSelectAll}
+              onClick={() => {
+                const pendingApps = filteredApplications.filter(app => app.status === 'pending').map(app => app.id);
+                setSelectedApplications(pendingApps.length === selectedApplications.length ? [] : pendingApps);
+              }}
               className="px-4 py-2 border border-gray-300 text-gray-700 hover:bg-gray-50 rounded-lg font-medium transition-colors"
             >
-              Select All Pending
+              {selectedApplications.length === filteredApplications.filter(app => app.status === 'pending').length && selectedApplications.length > 0
+                ? 'Deselect All'
+                : 'Select All Pending'
+              }
             </button>
             {selectedApplications.length > 0 && (
               <motion.button
@@ -286,20 +319,19 @@ const ApprovalsManagement = () => {
                 <div className="flex-1">
                   <div className="flex items-start justify-between mb-4">
                     <div className="flex items-start space-x-4">
-                      <div className={`w-4 h-4 rounded-full mt-1 ${
-                        application.type === 'exhibitor' ? 'bg-blue-500' : 'bg-purple-500'
-                      }`} />
+                      <div className="w-4 h-4 rounded-full mt-1 bg-blue-500" />
                       <div>
                         <h3 className="text-xl font-semibold text-gray-900">
-                          {application.applicant.name}
+                          {application.applicant?.name || 'Unknown Applicant'}
                         </h3>
-                        <p className="text-gray-600">{application.applicant.email}</p>
+                        <p className="text-gray-600">{application.applicant?.email || 'No email provided'}</p>
                         <div className="flex items-center space-x-4 mt-2">
                           <span className="text-sm bg-gray-100 text-gray-700 px-3 py-1 rounded-full">
-                            {application.applicant.type}
+                            {application.applicant?.type || 'Exhibitor'}
                           </span>
-                          <span className={`text-sm px-3 py-1 rounded-full capitalize ${getPriorityColor(application.priority)}`}>
-                            {application.priority} Priority
+                          <span className="text-sm bg-purple-100 text-purple-700 px-3 py-1 rounded-full flex items-center">
+                            <Building2 size={14} className="mr-1" />
+                            {application.expo?.title || 'Unknown Event'}
                           </span>
                         </div>
                       </div>
@@ -329,53 +361,31 @@ const ApprovalsManagement = () => {
 
                   <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6 mb-6">
                     <div>
-                      <h4 className="font-medium text-gray-900 mb-2">Event Details</h4>
+                      <h4 className="font-medium text-gray-900 mb-2">Application Details</h4>
                       <div className="space-y-1">
-                        <p className="text-sm text-gray-600 flex items-center">
-                          <Building size={14} className="mr-2" />
-                          {application.expo.title}
-                        </p>
-                        <p className="text-sm text-gray-600 flex items-center">
-                          <Calendar size={14} className="mr-2" />
-                          {new Date(application.expo.date).toLocaleDateString()}
-                        </p>
                         <p className="text-sm text-gray-600">
                           Applied: {new Date(application.submittedDate).toLocaleDateString()}
+                        </p>
+                        <p className="text-sm text-gray-600">
+                          Priority: <span className="capitalize font-medium">{application.priority || 'Normal'}</span>
                         </p>
                       </div>
                     </div>
 
-                    {application.type === 'session' ? (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Session Details</h4>
-                        <div className="space-y-1">
-                          <p className="text-sm text-gray-600">
-                            <strong>Title:</strong> {application.sessionDetails.title}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <strong>Duration:</strong> {application.sessionDetails.duration}
-                          </p>
-                          <p className="text-sm text-gray-600">
-                            <strong>Expected Attendees:</strong> {application.sessionDetails.expectedAttendees}
-                          </p>
-                        </div>
+                    <div>
+                      <h4 className="font-medium text-gray-900 mb-2">Documents</h4>
+                      <div className="space-y-1">
+                        {application.documents?.map((doc, idx) => (
+                          <div key={idx} className="flex items-center text-sm text-blue-600 hover:text-blue-700 cursor-pointer">
+                            <Eye size={14} className="mr-2" />
+                            {doc}
+                          </div>
+                        ))}
+                        {!application.documents?.length && (
+                          <span className="text-sm text-gray-500">No documents uploaded</span>
+                        )}
                       </div>
-                    ) : (
-                      <div>
-                        <h4 className="font-medium text-gray-900 mb-2">Documents</h4>
-                        <div className="space-y-1">
-                          {application.documents?.map((doc, idx) => (
-                            <div key={idx} className="flex items-center text-sm text-blue-600 hover:text-blue-700 cursor-pointer">
-                              <Eye size={14} className="mr-2" />
-                              {doc}
-                            </div>
-                          ))}
-                          {!application.documents?.length && (
-                            <span className="text-sm text-gray-500">No documents uploaded</span>
-                          )}
-                        </div>
-                      </div>
-                    )}
+                    </div>
 
                     <div>
                       <h4 className="font-medium text-gray-900 mb-2">Additional Notes</h4>
@@ -481,4 +491,4 @@ const ApprovalsManagement = () => {
   );
 };
 
-export default ApprovalsManagement;
+export default ExhibitorApprovals;

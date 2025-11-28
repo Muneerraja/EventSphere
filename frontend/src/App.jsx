@@ -27,6 +27,10 @@ import {
   MyExpos,
   ViewExpo,
   EditExpo,
+  ExhibitorApprovals,
+  SessionManagement,
+  BoothManagement,
+  AttendeeManagement,
   MyBooths,
   ApplyForExpos,
   ExhibitorProfile,
@@ -104,6 +108,26 @@ function App() {
             <Route path="organizer/create-expo" element={
               <ProtectedRoute requiredRole={["admin", "organizer"]}>
                 <CreateExpo />
+              </ProtectedRoute>
+            } />
+            <Route path="organizer/exhibitor-approvals" element={
+              <ProtectedRoute requiredRole={["admin", "organizer"]}>
+                <ExhibitorApprovals />
+              </ProtectedRoute>
+            } />
+            <Route path="organizer/sessions" element={
+              <ProtectedRoute requiredRole={["admin", "organizer"]}>
+                <SessionManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="organizer/booths" element={
+              <ProtectedRoute requiredRole={["admin", "organizer"]}>
+                <BoothManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="organizer/attendees" element={
+              <ProtectedRoute requiredRole={["admin", "organizer"]}>
+                <AttendeeManagement />
               </ProtectedRoute>
             } />
             <Route path="organizer/expo/:id/view" element={

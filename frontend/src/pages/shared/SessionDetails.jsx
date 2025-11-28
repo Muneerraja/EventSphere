@@ -18,7 +18,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const SessionDetails = () => {
   const { id } = useParams();
@@ -41,87 +40,8 @@ const SessionDetails = () => {
       // TODO: Set expo from response.data.expoData
     } catch (error) {
       console.error('Error fetching session details:', error);
-      // Fallback to dummy data
-      // Mock data matching Session model from dummydata.js
-      const allUsers = [
-        { _id: "507f1f77bcf86cd799439012", username: "john_org", profile: { firstName: "John", lastName: "Smith" }, role: "organizer" },
-        // Add other users as needed for speakers
-      ];
-
-      // Session data from dummydata.js - "Introduction to Machine Learning"
-      const mockSession = {
-        _id: "507f1f77bcf86cd799439041",
-        title: "Introduction to Machine Learning",
-        speaker: "507f1f77bcf86cd799439012", // john_org
-        topic: "Machine Learning Fundamentals",
-        expo: "507f1f77bcf86cd799439021", // Tech Conference 2024
-        time: new Date("2024-06-15T10:00:00Z"),
-        location: "Main Hall",
-        ratings: [
-          {
-            user: "507f1f77bcf86cd799439014", // mike_attendee
-            score: 5,
-            comment: "Excellent introduction!"
-          },
-          {
-            user: "507f1f77bcf86cd799439016", // alex_attendee
-            score: 4,
-            comment: "Good session, very informative"
-          }
-        ],
-        attendance: ["507f1f77bcf86cd799439014", "507f1f77bcf86cd799439016"], // Mike and Alex attended
-
-        // Populated data
-        speakerData: {
-          _id: "507f1f77bcf86cd799439012",
-          username: "john_org",
-          profile: { firstName: "John", lastName: "Smith" },
-          role: "organizer"
-        },
-        expoData: {
-          _id: "507f1f77bcf86cd799439021",
-          title: "Tech Conference 2024",
-          organizer: "507f1f77bcf86cd799439012"
-        }
-      };
-
-      // Calculate derived data from backend model
-      const rating = mockSession.ratings.length > 0
-        ? mockSession.ratings.reduce((sum, r) => sum + r.score, 0) / mockSession.ratings.length
-        : 0;
-
-      const enhancedSession = {
-        ...mockSession,
-        rating: rating,
-        totalRatings: mockSession.ratings.length,
-        registeredCount: mockSession.attendance.length,
-        capacity: 50, // Example capacity
-        description: `Dive into the fundamentals of machine learning with John Smith. This session covers key concepts, algorithms, and practical applications of ML.
-
-        Topics include:
-        - Supervised and Unsupervised Learning
-        - Key algorithms and their use cases
-        - Data preparation and feature engineering
-        - Model evaluation and validation
-        - Real-world applications and case studies
-
-        No prior ML experience required.`,
-        learningObjectives: [
-          "Understand machine learning basics",
-          "Learn key algorithms and their applications",
-          "Practice with real datasets",
-          "Build and evaluate ML models"
-        ],
-        materials: [
-          "Presentation slides",
-          "Sample datasets",
-          "Jupyter notebooks"
-        ],
-        prerequisites: "Basic programming knowledge helpful but not required"
-      };
-
-      setSession(enhancedSession);
-      setExpo(enhancedSession.expoData);
+      setSession(null);
+      setExpo(null);
     } finally {
       setLoading(false);
     }

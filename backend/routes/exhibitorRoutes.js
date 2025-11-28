@@ -5,6 +5,8 @@ const { authenticate, authorize } = require('../middlewares/auth');
 const upload = require('../middlewares/upload');
 
 router.post('/', authenticate, upload.single('logo'), exhibitorController.createExhibitor);
+router.get('/profile', authenticate, exhibitorController.getExhibitorProfile);
+router.put('/profile', authenticate, upload.single('logo'), exhibitorController.updateExhibitorProfile);
 router.put('/:id', authenticate, upload.single('logo'), exhibitorController.updateExhibitor);
 router.delete('/:id', authenticate, exhibitorController.deleteExhibitor);
 router.put('/:id/approve', authenticate, authorize('organizer'), exhibitorController.approveExhibitor);

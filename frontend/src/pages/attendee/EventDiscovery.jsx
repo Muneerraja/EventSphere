@@ -17,7 +17,6 @@ import {
   SlidersHorizontal
 } from 'lucide-react';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const EventDiscovery = () => {
   const [events, setEvents] = useState([]);
@@ -29,6 +28,17 @@ const EventDiscovery = () => {
   const [sortBy, setSortBy] = useState('date');
   const [viewMode, setViewMode] = useState('grid');
   const [favorites, setFavorites] = useState([]);
+  const [availableCategories, setAvailableCategories] = useState([]);
+  const [availableLocations, setAvailableLocations] = useState([]);
+
+  // Filter events based on search and filters
+  const filteredEvents = events.filter(event => {
+    const matchesSearch = event.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                         event.description.toLowerCase().includes(searchQuery.toLowerCase());
+    const matchesCategory = filterCategory === 'all' || event.category === filterCategory;
+    const matchesLocation = filterLocation === 'all' || event.location === filterLocation;
+    return matchesSearch && matchesCategory && matchesLocation;
+  });
 
   useEffect(() => {
     fetchEventsData();
@@ -55,40 +65,22 @@ const EventDiscovery = () => {
         startDate: new Date(expo.date).toISOString().split('T')[0],
         endDate: new Date(expo.date).toISOString().split('T')[0], // Assuming single day by default
 
-        // Mock properties (would come from backend in real implementation)
-        capacity: 1000 + Math.floor(Math.random() * 1000),
-        registered: Math.floor(Math.random() * 500) + 100,
-        price: { min: 25, max: 150 },
-        rating: (Math.random() * 2 + 3).toFixed(1),
-        reviews: Math.floor(Math.random() * 200) + 10,
-        tags: [expo.theme],
-        featured: Math.random() > 0.6
+
       }));
 
       setEvents(transformedEvents);
+
+      // Extract unique categories and locations for dynamic filters
+      const categories = [...new Set(expos.map(expo => expo.theme))];
+      const locations = [...new Set(expos.map(expo => expo.location))];
+      setAvailableCategories(categories);
+      setAvailableLocations(locations);
     } catch (error) {
       console.error('Error fetching events:', error);
-
-      // Fallback to mock data from dummydata.js
-      const fallbackEvents = dummyData.expos.map(expo => ({
-        _id: expo._id,
-        title: expo.title,
-        date: expo.date,
-        location: expo.location,
-        description: expo.description,
-        theme: expo.theme,
-        category: expo.theme,
-        startDate: new Date(expo.date).toISOString().split('T')[0],
-        endDate: new Date(expo.date).toISOString().split('T')[0],
-        capacity: 1000 + Math.floor(Math.random() * 1000),
-        registered: Math.floor(Math.random() * 500) + 100,
-        price: { min: 25, max: 150 },
-        rating: (Math.random() * 2 + 3).toFixed(1),
-        reviews: Math.floor(Math.random() * 200) + 10,
-        tags: [expo.theme],
-        featured: Math.random() > 0.6
-      }));
-      setEvents(fallbackEvents);
+      // Set empty array on error
+      setEvents([]);
+      setAvailableCategories([]);
+      setAvailableLocations([]);
     } finally {
       setLoading(false);
     }
@@ -151,8 +143,9 @@ const EventDiscovery = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Categories</option>
-              <option value="technology">Technology</option>
-              <option value="healthcare">Healthcare</option>
+              {availableCategories.map(category => (
+                <option key={category} value={category}>{category}</option>
+              ))}
             </select>
           </div>
           <div>
@@ -163,15 +156,16 @@ const EventDiscovery = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Locations</option>
-              <option value="karachi">Karachi</option>
-              <option value="islamabad">Islamabad</option>
+              {availableLocations.map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
             </select>
           </div>
         </div>
       </motion.div>
 
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-        {events.map((event, index) => (
+        {filteredEvents.map((event, index) => (
           <motion.div
             key={event._id}
             initial={{ opacity: 0, y: 20 }}
@@ -185,12 +179,11 @@ const EventDiscovery = () => {
             <div className="p-6">
               <h3 className="text-lg font-semibold text-gray-900 mb-2">{event.title}</h3>
               <p className="text-gray-600 text-sm mb-4">{event.description}</p>
-              <div className="flex items-center justify-between mb-4">
+              <div className="flex items-center mb-4">
                 <span className="text-sm text-gray-600">
                   <Calendar size={16} className="inline mr-1" />
                   {formatDate(event.startDate)}
                 </span>
-                <span className="text-lg font-bold text-gray-900">${event.price.min}</span>
               </div>
               <button className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium">
                 View Details

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Save, RefreshCw, Shield, Mail, Database, Palette, Globe, Settings } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const SystemSettings = () => {
   const { user } = useAuth();
@@ -23,61 +22,15 @@ const SystemSettings = () => {
       setSettings(response.data);
     } catch (error) {
       console.error('Error fetching settings:', error);
-      // Fallback to dummy data in dummydata.js
-      const mockSettings = {
-        general: {
-          siteTitle: 'EventSphere',
-          siteDescription: 'Leading event management platform for expos and conferences',
-          contactEmail: 'admin@eventsphere.com',
-          supportPhone: '+92-21-123-4567',
-          timezone: 'Asia/Karachi',
-          language: 'en',
-          maintenanceMode: false
-        },
-        security: {
-          sessionTimeout: 30,
-          passwordMinLength: 8,
-          requireTwoFactor: false,
-          maxLoginAttempts: 5,
-          lockoutDuration: 15,
-          enableCaptcha: true,
-          ipWhitelistEnabled: false
-        },
-        email: {
-          smtpHost: 'smtp.gmail.com',
-          smtpPort: 587,
-          smtpUsername: 'noreply@eventsphere.com',
-          smtpUseTLS: true,
-          fromEmail: 'noreply@eventsphere.com',
-          fromName: 'EventSphere Team',
-          emailTemplatesEnabled: true
-        },
-        database: {
-          backupFrequency: 'daily',
-          maxConnections: 100,
-          queryTimeout: 30,
-          logQueries: false,
-          enableProfiling: false
-        },
-        appearance: {
-          theme: 'light',
-          primaryColor: '#2563EB',
-          secondaryColor: '#64748B',
-          logoUrl: '/logo.png',
-          faviconUrl: '/favicon.ico'
-        },
-        features: {
-          allowSelfRegistration: true,
-          requireEmailVerification: true,
-          enableNotifications: true,
-          enableAnalytics: true,
-          enableSocialSharing: true,
-          maxEventsPerUser: 10,
-          maxSessionsPerEvent: 20
-        }
-      };
-
-      setSettings(mockSettings);
+      // Set empty settings object on error
+      setSettings({
+        general: {},
+        security: {},
+        email: {},
+        database: {},
+        appearance: {},
+        features: {}
+      });
     } finally {
       setLoading(false);
     }

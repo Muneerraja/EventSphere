@@ -2,6 +2,13 @@ const { Exhibitor, Expo, User, Session } = require('../models');
 
 exports.getApplications = async (req, res) => {
   try {
+    let userExpos = [];
+    if (req.user.role === 'organizer') {
+      // Get expos organized by this user
+      userExpos = await Expo.find({ organizer: req.user.id }).select('_id');
+      userExpos = userExpos.map(expo => expo._id.toString());
+    }
+
     // Get all pending applications: exhibitor applications and session requests
     const [exhibitorApplications, pendingSessions] = await Promise.all([
       Exhibitor.find({ status: 'pending' })
@@ -14,8 +21,21 @@ exports.getApplications = async (req, res) => {
         .sort({ createdAt: -1 })
     ]);
 
+    // Filter applications if user is organizer
+    let filteredExhibitorApps = exhibitorApplications;
+    let filteredSessionApps = pendingSessions;
+
+    if (req.user.role === 'organizer') {
+      filteredExhibitorApps = exhibitorApplications.filter(app =>
+        userExpos.includes(app.expoApplication._id.toString())
+      );
+      filteredSessionApps = pendingSessions.filter(app =>
+        userExpos.includes(app.expo._id.toString())
+      );
+    }
+
     // Format exhibitor applications
-    const formattedExhibitorApps = exhibitorApplications.map(exhibitor => ({
+    const formattedExhibitorApps = filteredExhibitorApps.map(exhibitor => ({
       id: exhibitor._id,
       type: 'exhibitor',
       status: exhibitor.status,
@@ -37,7 +57,7 @@ exports.getApplications = async (req, res) => {
     }));
 
     // Format session applications
-    const formattedSessionApps = pendingSessions.map(session => ({
+    const formattedSessionApps = filteredSessionApps.map(session => ({
       id: session._id,
       type: 'session',
       status: session.status,
@@ -76,9 +96,14 @@ exports.getApplication = async (req, res) => {
     // Try to find as exhibitor application first
     let application = await Exhibitor.findById(id)
       .populate('user', 'profile.firstName profile.lastName username')
-      .populate('expoApplication', 'title date location');
+      .populate('expoApplication', 'title date location organizer');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to view this application' });
+      }
+
       res.json({
         id: application._id,
         type: 'exhibitor',
@@ -104,9 +129,14 @@ exports.getApplication = async (req, res) => {
     // Try to find as session application
     application = await Session.findById(id)
       .populate('speaker', 'profile.firstName profile.lastName username')
-      .populate('expo', 'title date location');
+      .populate('expo', 'title date location organizer');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to view this application' });
+      }
+
       res.json({
         id: application._id,
         type: 'session',
@@ -145,25 +175,39 @@ exports.approveApplication = async (req, res) => {
     const { id } = req.params;
 
     // Try to approve exhibitor application
-    let application = await Exhibitor.findByIdAndUpdate(
-      id,
-      { status: 'approved', approvedDate: new Date() },
-      { new: true }
-    ).populate('user').populate('expoApplication');
+    let application = await Exhibitor.findById(id).populate('expoApplication');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to approve this application' });
+      }
+
+      application = await Exhibitor.findByIdAndUpdate(
+        id,
+        { status: 'approved', approvedDate: new Date() },
+        { new: true }
+      ).populate('user').populate('expoApplication');
+
       res.json(application);
       return;
     }
 
     // Try to approve session application
-    application = await Session.findByIdAndUpdate(
-      id,
-      { status: 'approved', approvedDate: new Date() },
-      { new: true }
-    ).populate('speaker').populate('expo');
+    application = await Session.findById(id).populate('expo');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to approve this application' });
+      }
+
+      application = await Session.findByIdAndUpdate(
+        id,
+        { status: 'approved', approvedDate: new Date() },
+        { new: true }
+      ).populate('speaker').populate('expo');
+
       res.json(application);
       return;
     }
@@ -181,25 +225,39 @@ exports.rejectApplication = async (req, res) => {
     const { reason } = req.body;
 
     // Try to reject exhibitor application
-    let application = await Exhibitor.findByIdAndUpdate(
-      id,
-      { status: 'rejected', rejectionReason: reason, rejectedDate: new Date() },
-      { new: true }
-    ).populate('user').populate('expoApplication');
+    let application = await Exhibitor.findById(id).populate('expoApplication');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to reject this application' });
+      }
+
+      application = await Exhibitor.findByIdAndUpdate(
+        id,
+        { status: 'rejected', rejectionReason: reason, rejectedDate: new Date() },
+        { new: true }
+      ).populate('user').populate('expoApplication');
+
       res.json(application);
       return;
     }
 
     // Try to reject session application
-    application = await Session.findByIdAndUpdate(
-      id,
-      { status: 'rejected', rejectionReason: reason, rejectedDate: new Date() },
-      { new: true }
-    ).populate('speaker').populate('expo');
+    application = await Session.findById(id).populate('expo');
 
     if (application) {
+      // Check if organizer owns the expo
+      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+        return res.status(403).json({ error: 'Unauthorized to reject this application' });
+      }
+
+      application = await Session.findByIdAndUpdate(
+        id,
+        { status: 'rejected', rejectionReason: reason, rejectedDate: new Date() },
+        { new: true }
+      ).populate('speaker').populate('expo');
+
       res.json(application);
       return;
     }

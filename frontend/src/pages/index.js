@@ -30,6 +30,10 @@ export { default as CreateExpo } from './organizer/CreateExpo';
 export { default as MyExpos } from './organizer/MyExpos';
 export { default as ViewExpo } from './organizer/ViewExpo';
 export { default as EditExpo } from './organizer/EditExpo';
+export { default as ExhibitorApprovals } from './organizer/ExhibitorApprovals';
+export { default as SessionManagement } from './organizer/SessionManagement';
+export { default as BoothManagement } from './organizer/BoothManagement';
+export { default as AttendeeManagement } from './organizer/AttendeeManagement';
 // Exhibitor pages
 export { default as ExhibitorDashboard } from './exhibitor/ExhibitorDashboard';
 export { default as ApplyForExpos } from './exhibitor/ApplyForExpos';

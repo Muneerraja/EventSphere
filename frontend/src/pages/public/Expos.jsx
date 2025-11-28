@@ -3,7 +3,6 @@ import { useState, useEffect } from 'react';
 import { Calendar, MapPin, Clock, Users, Eye } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const Expos = () => {
   const [expos, setExpos] = useState([]);
@@ -17,17 +16,8 @@ const Expos = () => {
         setExpos(response.data);
       } catch (error) {
         console.error('Error fetching expos:', error);
-        // Fallback to mock data from dummydata.js
-        const fallbackExpos = dummyData.expos.map(expo => ({
-          _id: expo._id,
-          title: expo.title,
-          date: expo.date,
-          location: expo.location,
-          description: expo.description,
-          theme: expo.theme,
-          organizer: expo.organizer
-        }));
-        setExpos(fallbackExpos);
+        // Set empty array on error
+        setExpos([]);
       } finally {
         setLoading(false);
       }
@@ -35,6 +25,9 @@ const Expos = () => {
 
     fetchExpos();
   }, []);
+
+  // Extract unique themes for dynamic filters
+  const availableThemes = [...new Set(expos.map(expo => expo.theme))];
 
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
@@ -55,9 +48,7 @@ const Expos = () => {
     ? expos
     : expos.filter(expo => expo.theme.toLowerCase().includes(filter));
 
-  const filterOptions = [
-    'all', 'technology', 'environment', 'marketing', 'healthcare', 'automotive', 'business'
-  ];
+  const filterOptions = ['all', ...availableThemes];
 
   if (loading) {
     return (
@@ -158,9 +149,9 @@ const Expos = () => {
                         <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
                           {expo.theme}
                         </span>
-                        <div className="flex items-center text-gray-500 text-sm">
+          <div className="flex items-center text-gray-500 text-sm">
                           <Eye size={16} className="mr-1" />
-                          {Math.floor(Math.random() * 5000) + 1000} views
+                          0 views
                         </div>
                       </div>
 

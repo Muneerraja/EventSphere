@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Building, MapPin, Users, Calendar, Edit } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const MyBooths = () => {
   const { user } = useAuth();
@@ -22,25 +21,8 @@ const MyBooths = () => {
       setBooths(response.data);
     } catch (error) {
       console.error('Error fetching booths:', error);
-
-      // Fallback to dummydata.js - filter booths by authenticated user
-      const userBooths = dummyData.booths.filter(booth => {
-        const relatedExhibitor = dummyData.exhibitors.find(ex => ex._id === booth.exhibitor);
-        return relatedExhibitor && relatedExhibitor.user === user.id;
-      });
-
-      const processedBooths = userBooths.map(booth => {
-        const expo = dummyData.expos.find(e => e._id === booth.expo) || {};
-        const exhibitor = dummyData.exhibitors.find(ex => ex._id === booth.exhibitor) || {};
-
-        return {
-          ...booth,
-          expo: expo,
-          products: exhibitor.products || []
-        };
-      });
-
-      setBooths(processedBooths);
+      // Set empty array on error
+      setBooths([]);
     } finally {
       setLoading(false);
     }

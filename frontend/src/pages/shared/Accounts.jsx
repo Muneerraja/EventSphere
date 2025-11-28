@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { User, Mail, Phone, MapPin, Calendar, Shield, Bell, Settings, Camera, Save } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const Accounts = () => {
   const { user, updateProfile } = useAuth();
@@ -48,11 +47,7 @@ const Accounts = () => {
       setProfile(response.data);
     } catch (error) {
       console.error('Error fetching profile:', error);
-      // Fallback to dummydata.js - find by email or username since _id format might differ
-      const userProfile = dummyData.users.find(u => u.email === user.email || u.username === user.username);
-      if (userProfile) {
-        setProfile(userProfile);
-      }
+      setProfile(null);
     } finally {
       setLoading(false);
     }

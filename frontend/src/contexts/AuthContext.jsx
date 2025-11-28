@@ -40,7 +40,10 @@ export const AuthProvider = ({ children }) => {
           };
 
           console.log('AuthContext: Making profile request with token');
-          const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/profile`, config);
+          const response = await axios.get(`${import.meta.env.VITE_API_URL}/users/profile`, {
+            ...config,
+            timeout: 5000
+          });
           console.log('AuthContext: Profile response:', response.data);
 
           // Set user and configure axios defaults

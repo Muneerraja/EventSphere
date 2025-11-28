@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Plus, Calendar, MapPin, Users, Edit, Trash2 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const ExposManagement = () => {
   const { user } = useAuth();
@@ -20,8 +19,8 @@ const ExposManagement = () => {
       setExpos(response.data);
     } catch (error) {
       console.error('Error fetching expos:', error);
-      // Fallback to mock data from dummydata.js
-      setExpos(dummyData.expos);
+      // Set empty array on error
+      setExpos([]);
     } finally {
       setLoading(false);
     }

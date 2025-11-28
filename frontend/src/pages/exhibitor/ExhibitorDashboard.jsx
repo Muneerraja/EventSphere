@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Calendar, Package, Eye, CheckCircle, Clock, AlertCircle, Plus, Edit, FileText } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const ExhibitorDashboard = () => {
   const { user } = useAuth();
@@ -19,95 +18,45 @@ const ExhibitorDashboard = () => {
 
   const fetchExhibitorData = async () => {
     try {
-      // Try to fetch real exhibitor data
-      const [exhibitorsResponse, boothsResponse] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/exhibitors/`),
-        axios.get(`${import.meta.env.VITE_API_URL}/booths/`)
-      ]);
+      // Fetch applications for this user
+      const applicationsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/applications/`);
+      const userApplications = applicationsResponse.data.filter(app => app.applicant._id === user._id);
 
-      // Process exhibitors data for applications
-      const applicationsData = exhibitorsResponse.data
-        .filter(exhibitor => exhibitor.user === user.id)
-        .map(exhibitor => {
-          const expo = dummyData.expos.find(e => e._id === exhibitor.expoApplication) || {};
-          return {
-            id: exhibitor._id,
-            expoTitle: expo.title || 'Unknown Expo',
-            expoDate: expo.date || '',
-            status: exhibitor.status || 'pending',
-            submittedDate: new Date(exhibitor.createdAt || Date.now()).toISOString(),
-            boothAssigned: exhibitor.status === 'approved',
-            boothId: exhibitor.booths?.[0] ? `B${Math.floor(Math.random() * 100) + 1}` : null
-          };
-        });
+      // Transform applications data
+      const applicationsData = userApplications.map(app => ({
+        id: app._id,
+        expoTitle: app.expo?.title || 'Unknown Expo',
+        expoDate: app.expo?.date || '',
+        status: app.status,
+        submittedDate: app.createdAt,
+        boothAssigned: app.status === 'approved',
+        boothId: null // Will be determined from booths
+      }));
 
-      // Process booths data
-      const boothsData = boothsResponse.data
-        .filter(booth => {
-          // Find if user has any booths (booth might not have direct user relation, so check exhibitor)
-          const relatedExhibitor = exhibitorsResponse.data.find(ex => ex._id === booth.exhibitor);
-          return relatedExhibitor && relatedExhibitor.user === user.id;
-        })
-        .map(booth => {
-          const expo = dummyData.expos.find(e => e._id === booth.expo) || {};
-          const exhibitor = exhibitorsResponse.data.find(ex => ex._id === booth.exhibitor) || {};
-          return {
-            id: booth._id,
-            expoTitle: expo.title || 'Unknown Expo',
-            boothId: booth.space || 'A1',
-            space: `${Math.floor(Math.random() * 15) + 8}x${Math.floor(Math.random() * 15) + 8} ft`,
-            size: booth.size || `${Math.floor(Math.random() * 15) + 8}x${Math.floor(Math.random() * 15) + 8} ft`,
-            products: exhibitor.products || ['Technology Solutions'],
-            visitors: Math.floor(Math.random() * 500) + 100,
-            inquiries: Math.floor(Math.random() * 50) + 10,
-            lastUpdated: new Date(booth.createdAt || Date.now()).toISOString()
-          };
-        });
+      // Fetch booths for this user
+      const boothsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/booths/`);
+      const userBooths = boothsResponse.data.filter(booth => booth.exhibitor === user._id);
+
+      // Transform booths data
+      const boothsData = userBooths.map(booth => ({
+        id: booth._id,
+        expoTitle: booth.expo?.title || 'Unknown Expo',
+        boothId: booth.boothNumber,
+        space: booth.size,
+        size: booth.size,
+        products: booth.features || [],
+        visitors: 0, // Placeholder - would need analytics
+        inquiries: 0, // Placeholder - would need analytics
+        lastUpdated: booth.createdAt
+      }));
 
       setApplications(applicationsData);
       setBooths(boothsData);
     } catch (error) {
       console.error('Error fetching exhibitor data:', error);
-
-      // Fallback to dummydata.js - filter exhibitors by authenticated user
-      const userExhibitors = dummyData.exhibitors.filter(exhibitor => exhibitor.user === user.id);
-      const userBooths = dummyData.booths.filter(booth => {
-        const relatedExhibitor = dummyData.exhibitors.find(ex => ex._id === booth.exhibitor);
-        return relatedExhibitor && relatedExhibitor.user === user.id;
-      });
-
-      const applicationsData = userExhibitors.map(exhibitor => {
-        const expo = dummyData.expos.find(e => e._id === exhibitor.expoApplication) || {};
-        return {
-          id: exhibitor._id,
-          expoTitle: expo.title || 'Unknown Expo',
-          expoDate: expo.date || '',
-          status: exhibitor.status || 'pending',
-          submittedDate: new Date(exhibitor.createdAt || Date.now()).toISOString(),
-          boothAssigned: exhibitor.status === 'approved',
-          boothId: exhibitor.status === 'approved' ? `B${Math.floor(Math.random() * 100) + 1}` : null,
-          rejectionReason: exhibitor.status === 'rejected' ? 'Booth space unavailable for requested date' : null
-        };
-      });
-
-      const boothsData = userBooths.map(booth => {
-        const expo = dummyData.expos.find(e => e._id === booth.expo) || {};
-        const exhibitor = dummyData.exhibitors.find(ex => ex._id === booth.exhibitor) || {};
-        return {
-          id: booth._id,
-          expoTitle: expo.title || 'Unknown Expo',
-          boothId: booth.space || 'A1',
-          space: `${Math.floor(Math.random() * 15) + 8}x${Math.floor(Math.random() * 15) + 8} ft`,
-          size: booth.size || `${Math.floor(Math.random() * 15) + 8}x${Math.floor(Math.random() * 15) + 8} ft`,
-          products: exhibitor.products || ['Technology Solutions'],
-          visitors: Math.floor(Math.random() * 500) + 100,
-          inquiries: Math.floor(Math.random() * 50) + 10,
-          lastUpdated: new Date(booth.createdAt || Date.now()).toISOString()
-        };
-      });
-
-      setApplications(applicationsData);
-      setBooths(boothsData);
+      // Set empty arrays on error
+      setApplications([]);
+      setBooths([]);
     } finally {
       setLoading(false);
     }

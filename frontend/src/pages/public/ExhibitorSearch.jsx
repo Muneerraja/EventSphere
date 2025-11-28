@@ -8,33 +8,7 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 
-// Inline mock exhibitor data
-const mockExhibitors = [
-  {
-    _id: "507f1f77bcf86cd799439031",
-    user: "507f1f77bcf86cd799439013",
-    company: "InnovateTech Solutions",
-    products: ["AI Assistants", "Cloud Computing", "Data Analytics"],
-    contact: "sarah@innovatetech.com",
-    description: "Leading provider of AI-powered business solutions",
-    status: "approved",
-    expoApplication: "507f1f77bcf86cd799439021",
-    booths: [],
-    createdAt: new Date("2024-02-15T00:00:00Z")
-  },
-  {
-    _id: "507f1f77bcf86cd799439032",
-    user: "507f1f77bcf86cd799439015",
-    company: "CloudSoft Technologies",
-    products: ["Cloud Storage", "DevOps Tools", "Microservices"],
-    contact: "emma@cloudsoft.com",
-    description: "Enterprise cloud solutions and DevOps consulting",
-    status: "approved",
-    expoApplication: "507f1f77bcf86cd799439021",
-    booths: [],
-    createdAt: new Date("2024-03-01T00:00:00Z")
-  }
-];
+
 
 const ExhibitorSearch = () => {
   const [exhibitors, setExhibitors] = useState([]);
@@ -80,20 +54,7 @@ const ExhibitorSearch = () => {
 
     } catch (error) {
       console.error('Error fetching exhibitors:', error);
-
-      let fallbackExhibitors = mockExhibitors.map(exhibitor => ({
-        ...exhibitor,
-        logo: "/api/placeholder/100/100"
-      }));
-
-      if (searchQuery) {
-        fallbackExhibitors = fallbackExhibitors.filter(exhibitor =>
-          exhibitor.company.toLowerCase().includes(searchQuery.toLowerCase())
-        );
-      }
-
-      setExhibitors(fallbackExhibitors);
-
+      setExhibitors([]);
     } finally {
       setLoading(false);
     }
@@ -187,14 +148,24 @@ const ExhibitorSearch = () => {
       {/* Exhibitors Grid */}
       <section className="py-20 bg-gray-50">
         <div className="max-w-7xl mx-auto px-4">
-          <motion.div
-            variants={{ animate: { transition: { staggerChildren: 0.1 } } }}
-            initial="initial"
-            animate="animate"
-            className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
-          >
+          {exhibitors.length === 0 ? (
+            <motion.div
+              variants={fadeInUp}
+              className="text-center py-20"
+            >
+              <Building size={64} className="mx-auto text-gray-400 mb-6" />
+              <h3 className="text-2xl font-semibold text-gray-600 mb-2">No exhibitors found</h3>
+              <p className="text-gray-500">Try adjusting your search criteria or check back later.</p>
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={{ animate: { transition: { staggerChildren: 0.1 } } }}
+              initial="initial"
+              animate="animate"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
 
-            {exhibitors.map((exhibitor) => (
+              {exhibitors.map((exhibitor) => (
               <motion.div
                 key={exhibitor._id}
                 variants={fadeInUp}
@@ -257,9 +228,9 @@ const ExhibitorSearch = () => {
                 </div>
 
               </motion.div>
-            ))}
-
-          </motion.div>
+              ))}
+            </motion.div>
+          )}
         </div>
       </section>
 

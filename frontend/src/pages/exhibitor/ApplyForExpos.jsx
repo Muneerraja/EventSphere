@@ -2,7 +2,6 @@ import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Calendar, MapPin, FileText, Send, CheckCircle } from 'lucide-react';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const ApplyForExpos = () => {
   const [expos, setExpos] = useState([]);
@@ -26,8 +25,8 @@ const ApplyForExpos = () => {
       setExpos(response.data);
     } catch (error) {
       console.error('Error fetching expos:', error);
-      // Fallback to mock data from dummydata.js
-      setExpos(dummyData.expos);
+      // Set empty array on error
+      setExpos([]);
     } finally {
       setLoading(false);
     }

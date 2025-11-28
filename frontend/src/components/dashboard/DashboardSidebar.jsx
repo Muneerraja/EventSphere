@@ -1,6 +1,6 @@
 import { motion } from 'framer-motion';
 import { Link, useLocation } from 'react-router-dom';
-import { X, Activity, Calendar, Users, Building, BookOpen, BarChart3, Settings, MessageSquare, User } from 'lucide-react';
+import { X, Activity, Calendar, Users, Building, BookOpen, BarChart3, Settings, MessageSquare, User, Clock } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
 
 const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
@@ -9,42 +9,106 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
   const menuItems = {
     admin: [
+      // Admin/Organizer Dashboard - Core Management
       { path: '/dashboard', icon: Activity, label: 'Dashboard' },
-      { path: '/dashboard/admin/expos', icon: Calendar, label: 'Expos Management' },
-      { path: '/dashboard/admin/users', icon: Users, label: 'User Management' },
-      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-      { path: '/dashboard/admin/approvals', icon: BookOpen, label: 'Approvals' },
-      { path: '/dashboard/admin/sessions', icon: Building, label: 'Sessions' },
-      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
-      { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
-      { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
-    ],
-    organizer: [
-      { path: '/dashboard', icon: Activity, label: 'Dashboard' },
+
+      // Expo Management (Admin/Organizer)
+      { path: '/dashboard/admin/expos', icon: Calendar, label: 'All Expos' },
       { path: '/dashboard/organizer/my-expos', icon: Calendar, label: 'My Expos' },
       { path: '/dashboard/organizer/create-expo', icon: Calendar, label: 'Create Expo' },
+
+      // Exhibitor Management (Admin/Organizer)
+      { path: '/dashboard/admin/approvals', icon: BookOpen, label: 'All Approvals' },
+      { path: '/dashboard/organizer/exhibitor-approvals', icon: BookOpen, label: 'Exhibitor Approvals' },
+      { path: '/dashboard/organizer/booths', icon: Building, label: 'Booth Management' },
+
+      // Schedule Management (Admin/Organizer)
+      { path: '/dashboard/admin/sessions', icon: Clock, label: 'All Sessions' },
+      { path: '/dashboard/organizer/sessions', icon: Clock, label: 'Session Management' },
+
+      // Attendee Management (Admin/Organizer)
+      { path: '/dashboard/organizer/attendees', icon: Users, label: 'Attendee Management' },
+
+      // Analytics & Reporting (Admin/Organizer)
       { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+
+      // Admin-only System Management
+      { path: '/dashboard/admin/users', icon: Users, label: 'User Management' },
+      { path: '/dashboard/settings', icon: Settings, label: 'System Settings' },
+
+      // Shared Features
+      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
+      { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+    ],
+    organizer: [
+      // Admin/Organizer Dashboard - Core Management
+      { path: '/dashboard', icon: Activity, label: 'Dashboard' },
+
+      // Expo Management
+      { path: '/dashboard/organizer/my-expos', icon: Calendar, label: 'My Expos' },
+      { path: '/dashboard/organizer/create-expo', icon: Calendar, label: 'Create Expo' },
+
+      // Exhibitor Management
+      { path: '/dashboard/organizer/exhibitor-approvals', icon: BookOpen, label: 'Exhibitor Approvals' },
+      { path: '/dashboard/organizer/booths', icon: Building, label: 'Booth Management' },
+
+      // Schedule Management
+      { path: '/dashboard/organizer/sessions', icon: Clock, label: 'Session Management' },
+
+      // Attendee Management
+      { path: '/dashboard/organizer/attendees', icon: Users, label: 'Attendee Management' },
+
+      // Analytics & Reporting
+      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+
+      // Shared Features
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
       { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
     ],
     exhibitor: [
+      // Exhibitor Portal Dashboard
       { path: '/dashboard', icon: Activity, label: 'Dashboard' },
-      { path: '/dashboard/exhibitor/booths', icon: Building, label: 'My Booths' },
+
+      // Registration and Profile Management
+      { path: '/dashboard/exhibitor/profile', icon: Users, label: 'My Profile' },
       { path: '/dashboard/exhibitor/apply', icon: Calendar, label: 'Apply for Expos' },
-      { path: '/dashboard/exhibitor/profile', icon: Users, label: 'Profile' },
-      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
+
+      // Booth Selection and Management
+      { path: '/dashboard/exhibitor/booths', icon: Building, label: 'My Booths' },
+
+      // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+
+      // Analytics
+      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+
+      // Account Settings
+      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
       { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
     ],
     attendee: [
+      // Attendee Interface Dashboard
       { path: '/dashboard', icon: Activity, label: 'Dashboard' },
+
+      // Event Information and Registration
       { path: '/dashboard/attendee/my-events', icon: Calendar, label: 'My Events' },
       { path: '/dashboard/attendee/discovery', icon: BookOpen, label: 'Event Discovery' },
-      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
+
+      // Exhibitor Search and Interaction
+      // Note: Exhibitor search is available on public pages, but attendee can interact via messages
+
+      // Schedule Management
+      // Note: Schedule viewing is part of event discovery and my events
+
+      // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+
+      // Analytics
+      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
+
+      // Account Settings
+      { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
       { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
     ]
   };

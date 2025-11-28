@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Users, Mail, Calendar, Crown, Shield, User } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const UserManagement = () => {
   const { user } = useAuth();
@@ -20,8 +19,8 @@ const UserManagement = () => {
       setUsers(response.data);
     } catch (error) {
       console.error('Error fetching users:', error);
-      // Fallback to mock data from dummydata.js
-      setUsers(dummyData.users);
+      // Set empty array on error
+      setUsers([]);
     } finally {
       setLoading(false);
     }

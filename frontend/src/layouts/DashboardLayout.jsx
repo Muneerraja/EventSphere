@@ -1,8 +1,11 @@
 import React, { useState, useEffect } from 'react';
 import { Outlet } from 'react-router-dom';
 import { DashboardHeader, DashboardSidebar } from '../components';
+import { useAuth } from '../contexts/AuthContext';
 
 const DashboardLayout = () => {
+  const { user } = useAuth();
+
   // Default: open on desktop, closed on mobile
   const [sidebarOpen, setSidebarOpen] = useState(() => {
     // Initialize based on screen size
@@ -10,8 +13,7 @@ const DashboardLayout = () => {
   });
   const [isMobile, setIsMobile] = useState(false);
 
-  // Mock user role - in real app, get from auth context
-  const userRole = 'admin'; // Could be 'admin', 'organizer', 'exhibitor', 'attendee'
+  const userRole = user?.role || 'attendee';
 
   useEffect(() => {
     const checkMobile = () => {

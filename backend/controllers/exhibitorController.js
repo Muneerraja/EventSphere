@@ -13,6 +13,32 @@ exports.createExhibitor = async (req, res) => {
   }
 };
 
+exports.getExhibitorProfile = async (req, res) => {
+  try {
+    const exhibitor = await Exhibitor.findOne({ user: req.user.id }).populate('user').populate('expoApplication').populate('booths');
+    if (!exhibitor) return res.status(404).json({ error: 'Exhibitor profile not found' });
+    res.json(exhibitor);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
+exports.updateExhibitorProfile = async (req, res) => {
+  try {
+    const { company, products, contact, description } = req.body;
+    const logoFile = req.file ? req.file.filename : undefined;
+    const exhibitor = await Exhibitor.findOne({ user: req.user.id });
+    if (!exhibitor) return res.status(404).json({ error: 'Exhibitor profile not found' });
+
+    const updateFields = { company, products, contact, description };
+    if (logoFile) updateFields.logo = logoFile;
+    const updatedExhibitor = await Exhibitor.findByIdAndUpdate(exhibitor._id, updateFields, { new: true }).populate('user').populate('expoApplication').populate('booths');
+    res.json(updatedExhibitor);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.updateExhibitor = async (req, res) => {
   try {
     const { company, products, logo, contact, description } = req.body;

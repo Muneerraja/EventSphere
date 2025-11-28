@@ -19,7 +19,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const ExhibitorsManagement = () => {
   const { user } = useAuth();
@@ -41,92 +40,8 @@ const ExhibitorsManagement = () => {
       setExhibitors(response.data);
     } catch (error) {
       console.error('Error fetching exhibitors:', error);
-      // Fallback to mock data from dummydata.js
-      const mockExhibitors = [
-        {
-          id: '1',
-          expoId: 'expo1',
-          expoName: 'Tech Innovation Summit 2025',
-          companyName: 'TechCorp Solutions',
-          companyLogo: '/logo1.png',
-          contactPerson: 'John Smith',
-          email: 'john@techcorp.com',
-          phone: '+1-555-0101',
-          website: 'https://techcorp.com',
-          description: 'Leading provider of enterprise software solutions',
-          businessCategory: 'Software & IT Services',
-          products: ['Cloud Solutions', 'AI Platform', 'Data Analytics'],
-          requestedBoothSize: 'Premium',
-          requestedBoothLocation: 'Main Hall',
-          status: 'pending',
-          appliedDate: '2025-01-10',
-          paymentStatus: 'paid',
-          documents: ['business-license.pdf', 'insurance-proof.pdf']
-        },
-        {
-          id: '2',
-          expoId: 'expo1',
-          expoName: 'Tech Innovation Summit 2025',
-          companyName: 'InnovateLabs Inc.',
-          companyLogo: '/logo2.png',
-          contactPerson: 'Sarah Johnson',
-          email: 'sarah@innovatelabs.com',
-          phone: '+1-555-0102',
-          website: 'https://innovatelabs.com',
-          description: 'Research and development company specializing in IoT',
-          businessCategory: 'Research & Development',
-          products: ['IoT Devices', 'Smart Sensors', 'Connectivity Solutions'],
-          requestedBoothSize: 'Standard',
-          requestedBoothLocation: 'Innovation Hub',
-          status: 'approved',
-          appliedDate: '2025-01-08',
-          paymentStatus: 'paid',
-          assignedBooth: 'A-12',
-          documents: ['business-registration.pdf', 'tax-certificates.pdf']
-        },
-        {
-          id: '3',
-          expoId: 'expo2',
-          expoName: 'Healthcare Tech Conference',
-          companyName: 'MediTech Solutions',
-          companyLogo: '/logo3.png',
-          contactPerson: 'Dr. Michael Chen',
-          email: 'mchen@meditech.com',
-          phone: '+1-555-0103',
-          website: 'https://meditech.com',
-          description: 'Healthcare software and medical device company',
-          businessCategory: 'Healthcare Technology',
-          products: ['Electronic Health Records', 'Medical Devices', 'Telemedicine Solutions'],
-          requestedBoothSize: 'Large',
-          requestedBoothLocation: 'Healthcare Pavilion',
-          status: 'rejected',
-          appliedDate: '2025-01-12',
-          paymentStatus: 'pending',
-          rejectionReason: 'Incomplete documentation provided',
-          documents: ['business-license.pdf']
-        },
-        {
-          id: '4',
-          expoId: 'expo2',
-          expoName: 'Healthcare Tech Conference',
-          companyName: 'BioHealth Research',
-          companyLogo: '/logo4.png',
-          contactPerson: 'Prof. Amanda Taylor',
-          email: 'amanda@biohealth.com',
-          phone: '+1-555-0104',
-          website: 'https://biohealth.com',
-          description: 'Biomedical research and pharmaceutical company',
-          businessCategory: 'Biomedical Research',
-          products: ['Clinical Trials Software', 'Lab Equipment', 'Research Tools'],
-          requestedBoothSize: 'Premium',
-          requestedBoothLocation: 'Research Center',
-          status: 'under_review',
-          appliedDate: '2025-01-14',
-          paymentStatus: 'paid',
-          documents: ['research-license.pdf', 'ethics-committee-approval.pdf', 'insurance.pdf']
-        }
-      ];
-      setExhibitors(dummyData.exhibitors || mockExhibitors);
+      // Set empty array on error
+      setExhibitors([]);
     } finally {
       setLoading(false);
     }

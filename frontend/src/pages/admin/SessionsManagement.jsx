@@ -17,11 +17,11 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const SessionsManagement = () => {
   const { user } = useAuth();
   const [sessions, setSessions] = useState([]);
+  const [expos, setExpos] = useState([]);
   const [loading, setLoading] = useState(true);
   const [showAddModal, setShowAddModal] = useState(false);
   const [selectedExpo, setSelectedExpo] = useState('all');
@@ -30,72 +30,58 @@ const SessionsManagement = () => {
   const [sortOrder, setSortOrder] = useState('asc');
 
   useEffect(() => {
-    fetchSessionsData();
-  }, [selectedExpo, searchQuery, sortBy, sortOrder]);
+    fetchExpos();
+  }, []);
+
+  useEffect(() => {
+    if (expos.length >= 0) { // Changed to >= 0 to allow empty expos array
+      fetchSessionsData();
+    }
+  }, [expos, selectedExpo, searchQuery, sortBy, sortOrder]);
+
+  const fetchExpos = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/expos/`, { timeout: 5000 });
+      setExpos(response.data);
+    } catch (error) {
+      console.error('Error fetching expos:', error);
+      setExpos([]);
+    }
+  };
 
   const fetchSessionsData = async () => {
     try {
-      // Mock sessions data
-      const mockSessions = [
-        {
-          id: '1',
-          expoId: 'expo1',
-          expoName: 'Tech Innovation Summit 2025',
-          title: 'Opening Keynote: Future of AI',
-          speaker: 'Dr. Sarah Johnson',
-          speakerBio: 'AI Research Director at TechCorp',
-          description: 'An overview of emerging AI technologies and their impact on business',
-          startTime: '2025-01-15T09:00:00',
-          endTime: '2025-01-15T10:30:00',
-          location: 'Main Auditorium A',
-          capacity: 500,
-          registered: 450,
-          status: 'confirmed',
-          category: 'Keynote'
-        },
-        {
-          id: '2',
-          expoId: 'expo1',
-          expoName: 'Tech Innovation Summit 2025',
-          title: 'Blockchain in Healthcare',
-          speaker: 'Dr. Michael Chen',
-          speakerBio: 'Blockchain Specialist at HealthTech Solutions',
-          description: 'Exploring blockchain applications in healthcare data management',
-          startTime: '2025-01-15T11:00:00',
-          endTime: '2025-01-15T12:00:00',
-          location: 'Room B203',
-          capacity: 150,
-          registered: 120,
-          status: 'confirmed',
-          category: 'Workshop'
-        },
-        {
-          id: '3',
-          expoId: 'expo2',
-          expoName: 'Healthcare Tech Conference',
-          title: 'Digital Health Solutions',
-          speaker: 'Prof. Amanda Taylor',
-          speakerBio: 'Healthcare Innovation Professor',
-          description: 'Latest developments in digital health monitoring',
-          startTime: '2025-01-20T14:00:00',
-          endTime: '2025-01-20T15:30:00',
-          location: 'Conference Hall C',
-          capacity: 200,
-          registered: 175,
-          status: 'tentative',
-          category: 'Panel Discussion'
-        }
-      ];
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/`, { timeout: 5000 });
+      let sessionsData = response.data;
 
-      let filteredSessions = mockSessions.filter(session => {
-        if (selectedExpo !== 'all' && session.expoId !== selectedExpo) return false;
-        if (searchQuery && !session.title.toLowerCase().includes(searchQuery.toLowerCase()) &&
-            !session.speaker.toLowerCase().includes(searchQuery.toLowerCase())) return false;
-        return true;
-      });
+      // Transform data to match component expectations
+      sessionsData = sessionsData.map(session => ({
+        ...session,
+        id: session._id,
+        startTime: session.time,
+        registered: session.attendance?.length || 0,
+        capacity: 50, // Default capacity since not in model
+        description: session.topic || 'No description available',
+        category: 'General', // Default category since not in model
+        expoName: session.expo?.title || 'Unknown Event',
+        speaker: typeof session.speaker === 'object' ? session.speaker?.username || 'Unknown Speaker' : session.speaker || 'Unknown Speaker',
+        speakerBio: 'Speaker bio not available', // Not in model
+        status: 'confirmed' // Default status since not in model
+      }));
+
+      // Filter sessions client-side
+      if (selectedExpo !== 'all') {
+        sessionsData = sessionsData.filter(session => session.expo?._id === selectedExpo);
+      }
+      if (searchQuery) {
+        sessionsData = sessionsData.filter(session =>
+          session.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
+          session.speaker.toLowerCase().includes(searchQuery.toLowerCase())
+        );
+      }
 
       // Sort sessions
-      filteredSessions.sort((a, b) => {
+      sessionsData.sort((a, b) => {
         let aValue, bValue;
         switch (sortBy) {
           case 'date':
@@ -121,9 +107,11 @@ const SessionsManagement = () => {
         }
       });
 
-      setSessions(filteredSessions);
+      setSessions(sessionsData);
     } catch (error) {
       console.error('Error fetching sessions:', error);
+      // Set empty array on error
+      setSessions([]);
     } finally {
       setLoading(false);
     }
@@ -207,8 +195,9 @@ const SessionsManagement = () => {
               className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
             >
               <option value="all">All Events</option>
-              <option value="expo1">Tech Innovation Summit 2025</option>
-              <option value="expo2">Healthcare Tech Conference</option>
+              {expos.map(expo => (
+                <option key={expo._id} value={expo._id}>{expo.title}</option>
+              ))}
             </select>
           </div>
 
@@ -268,8 +257,8 @@ const SessionsManagement = () => {
                     <h3 className="text-lg font-semibold text-gray-900 mb-1">{session.title}</h3>
                     <p className="text-sm text-blue-600 font-medium">{session.expoName}</p>
                   </div>
-                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(session.status)}`}>
-                    {session.status.charAt(0).toUpperCase() + session.status.slice(1)}
+                  <span className={`px-3 py-1 rounded-full text-xs font-medium border ${getStatusColor(session.status || 'confirmed')}`}>
+                    {(session.status || 'confirmed').charAt(0).toUpperCase() + (session.status || 'confirmed').slice(1)}
                   </span>
                 </div>
 

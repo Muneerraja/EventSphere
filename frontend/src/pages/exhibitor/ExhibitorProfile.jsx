@@ -1,58 +1,15 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Building, Upload, Plus, X, Save, Eye, Star, MapPin, Phone, Mail, Globe, Edit } from 'lucide-react';
+import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 const ExhibitorProfile = () => {
-  const [profile, setProfile] = useState({
-    companyName: 'TechCorp Solutions',
-    tagline: 'Leading Technology Solutions Provider',
-    description: 'TechCorp Solutions is a premier technology services company specializing in cloud infrastructure, digital transformation, and enterprise software solutions. With over 10 years of experience, we have successfully delivered projects for Fortune 500 companies across multiple industries.',
-    industry: 'Technology Services',
-    foundedYear: '2014',
-    companySize: '51-200',
-    logo: '/api/placeholder/150/150',
-    website: 'https://techcorp.com',
-    linkedin: 'https://linkedin.com/company/techcorp',
-    twitter: 'https://twitter.com/techcorp',
-    contactEmail: 'business@techcorp.com',
-    contactPhone: '+92-21-123-4567',
-    address: '123 Business Avenue, Karachi, Pakistan'
-  });
-
-  const [products, setProducts] = useState([
-    {
-      id: '1',
-      name: 'Cloud Infrastructure Solutions',
-      description: 'Comprehensive cloud migration and infrastructure management services',
-      category: 'Cloud Services',
-      featured: true
-    },
-    {
-      id: '2',
-      name: 'AI & Machine Learning Consulting',
-      description: 'Expert consulting for AI implementation and machine learning solutions',
-      category: 'AI/ML Services',
-      featured: false
-    },
-    {
-      id: '3',
-      name: 'Cybersecurity Solutions',
-      description: 'Advanced security solutions and compliance management',
-      category: 'Security',
-      featured: true
-    }
-  ]);
-
-  const [booths, setBooths] = useState([
-    {
-      id: '1',
-      expoTitle: 'Tech Innovation Summit 2025',
-      boothId: 'A1',
-      status: 'active',
-      space: 'Premium Corner Booth - 12x12 sq ft',
-      date: '2025-12-15T09:00:00Z'
-    }
-  ]);
+  const { user } = useAuth();
+  const [profile, setProfile] = useState(null);
+  const [products, setProducts] = useState([]);
+  const [booths, setBooths] = useState([]);
+  const [loading, setLoading] = useState(true);
 
   const [activeTab, setActiveTab] = useState('company');
   const [hasChanges, setHasChanges] = useState(false);
@@ -64,6 +21,70 @@ const ExhibitorProfile = () => {
     category: '',
     featured: false
   });
+
+  useEffect(() => {
+    if (user) {
+      fetchExhibitorProfile();
+    }
+  }, [user]);
+
+  const fetchExhibitorProfile = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/exhibitors/profile`);
+      const exhibitorData = response.data;
+
+      // Transform the data to match component expectations
+      const transformedProfile = {
+        companyName: exhibitorData.company || '',
+        tagline: '', // Not in model, add if needed
+        description: exhibitorData.description || '',
+        industry: '', // Not in model
+        foundedYear: '', // Not in model
+        companySize: '', // Not in model
+        logo: exhibitorData.logo ? `${import.meta.env.VITE_API_URL}/uploads/${exhibitorData.logo}` : '/api/placeholder/150/150',
+        website: '', // Not in model
+        linkedin: '', // Not in model
+        twitter: '', // Not in model
+        contactEmail: exhibitorData.contact || '',
+        contactPhone: '', // Not in model
+        address: '' // Not in model
+      };
+
+      setProfile(transformedProfile);
+      // For now, products are stored as strings, so create basic objects
+      const transformedProducts = (exhibitorData.products || []).map((product, index) => ({
+        id: index.toString(),
+        name: product,
+        description: '',
+        category: '',
+        featured: false
+      }));
+      setProducts(transformedProducts);
+      setBooths(exhibitorData.booths || []);
+    } catch (error) {
+      console.error('Error fetching exhibitor profile:', error);
+      // Set default empty state
+      setProfile({
+        companyName: '',
+        tagline: '',
+        description: '',
+        industry: '',
+        foundedYear: '',
+        companySize: '',
+        logo: '/api/placeholder/150/150',
+        website: '',
+        linkedin: '',
+        twitter: '',
+        contactEmail: '',
+        contactPhone: '',
+        address: ''
+      });
+      setProducts([]);
+      setBooths([]);
+    } finally {
+      setLoading(false);
+    }
+  };
 
   const handleProfileUpdate = (field, value) => {
     setProfile(prev => ({ ...prev, [field]: value }));
@@ -108,11 +129,19 @@ const ExhibitorProfile = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      const updateData = {
+        company: profile.companyName,
+        description: profile.description,
+        contact: profile.contactEmail,
+        products: products.map(p => p.name) // Send as array of strings
+      };
+
+      await axios.put(`${import.meta.env.VITE_API_URL}/exhibitors/profile`, updateData);
       setHasChanges(false);
+      // Optionally refetch to get updated data
+      await fetchExhibitorProfile();
     } catch (error) {
-      console.error('Error saving:', error);
+      console.error('Error saving profile:', error);
     } finally {
       setSaving(false);
     }
@@ -137,6 +166,24 @@ const ExhibitorProfile = () => {
     'Software Solutions', 'Cloud Services', 'AI/ML Services', 'Cybersecurity',
     'Consulting', 'Training', 'Hardware', 'Mobile Apps', 'Other'
   ];
+
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="animate-spin rounded-full h-12 w-12 border-b-2 border-blue-500"></div>
+      </div>
+    );
+  }
+
+  if (!profile) {
+    return (
+      <div className="flex justify-center items-center h-screen">
+        <div className="text-center">
+          <p className="text-gray-600">No profile found. Please create your exhibitor profile first.</p>
+        </div>
+      </div>
+    );
+  }
 
   return (
     <div className="space-y-6">

@@ -1,9 +1,8 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Star, Heart, Clock, MapPin, Users, TrendingUp, BookOpen, Bell, Search } from 'lucide-react';
+import { Calendar, Star, Heart, Clock, MapPin, Users, TrendingUp, BookOpen, Bell, Search, Eye } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const AttendeeDashboard = () => {
   const { user } = useAuth();
@@ -23,15 +22,17 @@ const AttendeeDashboard = () => {
 
   const fetchAttendeeData = async () => {
     try {
-      // Get authenticated user's ID from AuthContext
-      const userId = user._id;
+      // Fetch real attendee data from backend APIs
+      const [exposResponse, sessionsResponse] = await Promise.all([
+        axios.get(`${import.meta.env.VITE_API_URL}/expos/`),
+        axios.get(`${import.meta.env.VITE_API_URL}/sessions/`)
+      ]);
 
-      // Fetch attendee profile with populated data
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/attendees/public/profile/${userId}`);
-      const attendeeData = response.data;
+      const allExpos = exposResponse.data;
+      const allSessions = sessionsResponse.data;
 
-      // Transform the data for the UI
-      const transformedEvents = attendeeData.registeredExpos.map(expo => ({
+      // For now, show all expos as available events (no real registration tracking yet)
+      const availableEvents = allExpos.map(expo => ({
         _id: expo._id,
         title: expo.title,
         date: expo.date,
@@ -40,55 +41,42 @@ const AttendeeDashboard = () => {
         theme: expo.theme,
         organizer: expo.organizer,
         status: new Date(expo.date) > new Date() ? 'upcoming' : 'passed',
-        sessionCount: Math.floor(Math.random() * 5) + 1 // Mock - should calculate from sessions
+        sessionCount: allSessions.filter(session => session.expo === expo._id).length
       }));
 
-      const transformedSessions = attendeeData.bookmarkedSessions.map(session => ({
-        _id: session._id,
-        title: session.title,
-        time: session.time,
-        speaker: session.speaker,
-        topic: session.topic,
-        location: session.location,
-        ratings: session.ratings || [],
-        attendance: session.attendance || [],
-        speakerData: {
-          username: session.speaker,
-          profile: { firstName: session.speaker, lastName: "" } // Mock - should populate from user
-        },
-        expoData: {
-          title: "Parent Expo" // Mock - should populate from expo
-        }
-      }));
+      // For now, no real bookmarked sessions tracking
+      const bookmarkedSessions = [];
 
-      // Mock notifications and recommendations for now
-      const mockNotifications = [
-        {
-          _id: "507f1f77bcf86cd799439061",
-          user: userId,
-          type: "expo_registration",
-          message: `You have successfully registered for ${transformedEvents[0]?.title || 'an event'}`,
-          read: false,
-          createdAt: new Date()
-        }
-      ];
+      // Show upcoming events as recommendations
+      const recommendations = allExpos
+        .filter(expo => new Date(expo.date) > new Date())
+        .slice(0, 3)
+        .map(expo => ({
+          _id: expo._id,
+          title: expo.title,
+          date: expo.date,
+          attendeeCount: expo.totalAttendees || 0,
+          reason: 'Upcoming event you might be interested in'
+        }));
 
-      const mockRecommendations = transformedEvents.slice(0, 2).map(expo => ({
-        _id: expo._id,
-        title: expo.title,
-        date: expo.date,
-        reason: "Based on your registered events",
-        attendeeCount: Math.floor(Math.random() * 100) + 50
-      }));
+      // For now, no notifications
+      const notifications = [];
 
-      setProfile(attendeeData.user);
-      setRegisteredEvents(transformedEvents);
-      setBookmarkedSessions(transformedSessions);
-      setRecommendations(mockRecommendations);
-      setNotifications(mockNotifications);
+      setProfile(user);
+      setRegisteredEvents([]); // No real registration tracking yet
+      setBookmarkedSessions(bookmarkedSessions);
+      setRecommendations(recommendations);
+      setUpcomingEvents(availableEvents);
+      setNotifications(notifications);
     } catch (error) {
       console.error('Error fetching attendee data:', error);
-      // Show empty state when no data is available
+      // Set empty states
+      setProfile(user);
+      setRegisteredEvents([]);
+      setBookmarkedSessions([]);
+      setRecommendations([]);
+      setUpcomingEvents([]);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -116,12 +104,12 @@ const AttendeeDashboard = () => {
       >
         <div className="flex items-center justify-between">
           <div>
-            <h1 className="text-2xl font-bold mb-2">Welcome back, {profile?.profile?.firstName}!</h1>
+            <h1 className="text-2xl font-bold mb-2">Welcome back, {profile?.username || 'Attendee'}!</h1>
             <p className="text-blue-100">Explore upcoming events and manage your schedule</p>
           </div>
           <div className="hidden md:flex items-center space-x-4">
             <div className="w-16 h-16 rounded-full border-4 border-white bg-blue-500 flex items-center justify-center">
-              <span className="text-white font-bold text-xl">{profile?.profile?.firstName?.[0]}</span>
+              <span className="text-white font-bold text-xl">{profile?.username?.[0]?.toUpperCase() || 'A'}</span>
             </div>
             <div>
               <p className="text-sm opacity-75">Role</p>
@@ -291,11 +279,10 @@ const AttendeeDashboard = () => {
                     }`} />
                     <div>
                       <h3 className="font-medium text-gray-900">{session.title}</h3>
-                      <p className="text-sm text-gray-600">{session.expoData.title}</p>
+                      <p className="text-sm text-gray-600">{session.topic}</p>
                       <div className="flex items-center space-x-4 text-xs text-gray-500 mt-1">
-                        <span>{session.speakerData.profile.firstName} {session.speakerData.profile.lastName}</span>
                         <span>{new Date(session.time).toLocaleDateString()}</span>
-                        <span>{session.topic}</span>
+                        <span>{session.location}</span>
                       </div>
                     </div>
                   </div>

@@ -1,6 +1,6 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
-import { Calendar, Users, TrendingUp, DollarSign, Eye, Plus, Edit, CheckCircle, XCircle, Activity } from 'lucide-react';
+import { Calendar, Users, TrendingUp, DollarSign, Eye, Plus, Edit, CheckCircle, XCircle, Activity, Building } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
@@ -204,6 +204,7 @@ const OrganizerDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/organizer/exhibitor-approvals')}
             className="flex items-center justify-center space-x-2 border border-blue-600 text-blue-600 hover:bg-blue-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Users size={20} />
@@ -212,6 +213,7 @@ const OrganizerDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/organizer/sessions')}
             className="flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 hover:bg-gray-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Calendar size={20} />
@@ -304,24 +306,42 @@ const OrganizerDashboard = () => {
                   </div>
                 </div>
 
-                <div className="flex items-center space-x-3 ml-6 flex-col sm:flex-row gap-2 sm:gap-3">
+                <div className="flex items-center space-x-2 ml-6 flex-col sm:flex-row gap-2 sm:gap-2">
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(`/organizer/expo/${expo._id}/view`)}
-                    className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+                    className="flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
-                    <Eye size={16} />
-                    <span className="hidden xs:inline">View</span>
+                    <Eye size={14} />
+                    <span>View</span>
                   </motion.button>
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
                     onClick={() => navigate(`/organizer/expo/${expo._id}/edit`)}
-                    className="flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 hover:bg-gray-50 px-3 py-2 rounded-lg text-sm font-medium transition-colors w-full sm:w-auto"
+                    className="flex items-center justify-center space-x-1 border border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
-                    <Edit size={16} />
-                    <span className="hidden xs:inline">Edit</span>
+                    <Edit size={14} />
+                    <span>Edit</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(`/organizer/booths?expo=${expo._id}`)}
+                    className="flex items-center justify-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
+                  >
+                    <Building size={14} />
+                    <span>Booths</span>
+                  </motion.button>
+                  <motion.button
+                    whileHover={{ scale: 1.05 }}
+                    whileTap={{ scale: 0.95 }}
+                    onClick={() => navigate(`/organizer/sessions?expo=${expo._id}`)}
+                    className="flex items-center justify-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
+                  >
+                    <Calendar size={14} />
+                    <span>Sessions</span>
                   </motion.button>
                 </div>
               </div>
@@ -375,30 +395,10 @@ const OrganizerDashboard = () => {
               </motion.div>
             ))
           ) : (
-            // Fallback to demo activities if no notifications
-            [
-              { type: 'application', message: 'New exhibitor application for Tech Summit', time: '2 hours ago', status: 'pending' },
-              { type: 'booking', message: 'Booth A1 assigned to TechCorp Solutions', time: '4 hours ago', status: 'completed' },
-              { type: 'session', message: 'AI Workshop session created', time: '1 day ago', status: 'completed' },
-              { type: 'payment', message: 'Payment received for Healthcare Conference', time: '2 days ago', status: 'completed' }
-            ].map((activity, index) => (
-              <motion.div
-                key={index}
-                initial={{ opacity: 0, x: -20 }}
-                animate={{ opacity: 1, x: 0 }}
-                transition={{ delay: 0.1 * index }}
-                className="flex items-center justify-between py-3 border-b border-gray-100 last:border-b-0"
-              >
-                <div className="flex items-center space-x-3">
-                  <div className={`w-2 h-2 rounded-full ${
-                    activity.status === 'completed' ? 'bg-green-500' :
-                    activity.status === 'pending' ? 'bg-yellow-500' : 'bg-blue-500'
-                  }`} />
-                  <span className="text-gray-800">{activity.message}</span>
-                </div>
-                <span className="text-sm text-gray-500">{activity.time}</span>
-              </motion.div>
-            ))
+            <div className="text-center py-8">
+              <Activity size={32} className="mx-auto text-gray-400 mb-2" />
+              <p className="text-gray-600">No recent activity to display</p>
+            </div>
           )}
         </div>
       </motion.div>

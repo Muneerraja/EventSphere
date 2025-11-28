@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Send, Search, User, MoreVertical, Paperclip, Phone, Video, Users } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const MessagesCenter = () => {
   const { user } = useAuth();
@@ -32,91 +31,8 @@ const MessagesCenter = () => {
       setConversations(response.data);
     } catch (error) {
       console.error('Error fetching conversations:', error);
-      // Fallback to dummy data in dummydata.js
-      // Mock data matching Message model from dummydata.js
-      const allUsers = [
-        { _id: "507f1f77bcf86cd799439014", username: "mike_attendee", profile: { firstName: "Mike", lastName: "Wilson" }, role: "attendee" },
-        { _id: "507f1f77bcf86cd799439013", username: "sarah_exhibitor", profile: { firstName: "Sarah", lastName: "Johnson" }, role: "exhibitor" },
-        { _id: "507f1f77bcf86cd799439016", username: "alex_attendee", profile: { firstName: "Alex", lastName: "Brown" }, role: "attendee" },
-        { _id: "507f1f77bcf86cd799439015", username: "emma_exhibitor", profile: { firstName: "Emma", lastName: "Davis" }, role: "exhibitor" }
-      ];
-
-      // Messages from dummydata.js
-      const messagesFromDummy = [
-        {
-          _id: "507f1f77bcf86cd799439051",
-          sender: "507f1f77bcf86cd799439014", // mike_attendee
-          receiver: "507f1f77bcf86cd799439013", // sarah_exhibitor
-          conversationId: "507f1f77bcf86cd799439013-507f1f77bcf86cd799439014",
-          content: "Hi Sarah, I'm interested in your AI assistants. Can we schedule a meeting?",
-          type: "text",
-          read: false,
-          createdAt: new Date("2024-06-01T10:00:00Z")
-        },
-        {
-          _id: "507f1f77bcf86cd799439052",
-          sender: "507f1f77bcf86cd799439013", // sarah_exhibitor
-          receiver: "507f1f77bcf86cd799439014", // mike_attendee
-          conversationId: "507f1f77bcf86cd799439013-507f1f77bcf86cd799439014",
-          content: "Hi Mike! Sure, we'd love to discuss our AI solutions. Are you available tomorrow at 2 PM?",
-          type: "text",
-          read: false,
-          createdAt: new Date("2024-06-01T10:15:00Z")
-        },
-        {
-          _id: "507f1f77bcf86cd799439053",
-          sender: "507f1f77bcf86cd799439016", // alex_attendee
-          receiver: "507f1f77bcf86cd799439015", // emma_exhibitor
-          conversationId: "507f1f77bcf86cd799439015-507f1f77bcf86cd799439016",
-          content: "Hello Emma, your CloudSoft booth was amazing! Can you provide more info about your DevOps tools?",
-          type: "text",
-          read: true,
-          createdAt: new Date("2024-06-15T16:00:00Z")
-        }
-      ];
-
-      // Generate conversations from messages
-      const conversationMap = new Map();
-
-      messagesFromDummy.forEach(message => {
-        const convId = message.conversationId;
-        const otherParticipant = message.sender === messagesFromDummy[0].sender ?
-          allUsers.find(u => u._id === message.receiver) :
-          allUsers.find(u => u._id === message.sender);
-
-        if (!conversationMap.has(convId)) {
-          conversationMap.set(convId, {
-            id: convId,
-            participant: {
-              id: otherParticipant._id,
-              name: `${otherParticipant.profile.firstName} ${otherParticipant.profile.lastName}`,
-              username: otherParticipant.username,
-              role: otherParticipant.role,
-              company: otherParticipant.role === 'exhibitor' ?
-                `${otherParticipant.profile.firstName}'s Company` : 'Personal Account',
-              isOnline: Math.random() > 0.5 // Mock online status
-            },
-            lastMessage: message.content,
-            timestamp: message.createdAt.toISOString(),
-            unreadCount: message.read ? 0 : 1
-          });
-        } else {
-          // Update existing conversation with newer message
-          const existing = conversationMap.get(convId);
-          if (new Date(message.createdAt) > new Date(existing.timestamp)) {
-            existing.lastMessage = message.content;
-            existing.timestamp = message.createdAt.toISOString();
-            existing.unreadCount = message.read ? 0 : existing.unreadCount + 1;
-          }
-        }
-      });
-
-      const mockConversations = Array.from(conversationMap.values());
-      setConversations(mockConversations);
-
-      if (mockConversations.length > 0) {
-        setActiveConversation(mockConversations[0]);
-      }
+      // Set empty array on error
+      setConversations([]);
     } finally {
       setLoading(false);
     }
@@ -124,71 +40,11 @@ const MessagesCenter = () => {
 
   const fetchMessages = async (conversationId) => {
     try {
-      // Get messages from dummydata that match this conversation
-      const allUsers = [
-        { _id: "507f1f77bcf86cd799439014", username: "mike_attendee", profile: { firstName: "Mike", lastName: "Wilson" }, role: "attendee" },
-        { _id: "507f1f77bcf86cd799439013", username: "sarah_exhibitor", profile: { firstName: "Sarah", lastName: "Johnson" }, role: "exhibitor" },
-        { _id: "507f1f77bcf86cd799439016", username: "alex_attendee", profile: { firstName: "Alex", lastName: "Brown" }, role: "attendee" },
-        { _id: "507f1f77bcf86cd799439015", username: "emma_exhibitor", profile: { firstName: "Emma", lastName: "Davis" }, role: "exhibitor" }
-      ];
-
-      const messagesFromDummy = [
-        {
-          _id: "507f1f77bcf86cd799439051",
-          sender: "507f1f77bcf86cd799439014", // mike_attendee
-          receiver: "507f1f77bcf86cd799439013", // sarah_exhibitor
-          conversationId: "507f1f77bcf86cd799439013-507f1f77bcf86cd799439014",
-          content: "Hi Sarah, I'm interested in your AI assistants. Can we schedule a meeting?",
-          type: "text",
-          read: false,
-          createdAt: new Date("2024-06-01T10:00:00Z")
-        },
-        {
-          _id: "507f1f77bcf86cd799439052",
-          sender: "507f1f77bcf86cd799439013", // sarah_exhibitor
-          receiver: "507f1f77bcf86cd799439014", // mike_attendee
-          conversationId: "507f1f77bcf86cd799439013-507f1f77bcf86cd799439014",
-          content: "Hi Mike! Sure, we'd love to discuss our AI solutions. Are you available tomorrow at 2 PM?",
-          type: "text",
-          read: false,
-          createdAt: new Date("2024-06-01T10:15:00Z")
-        },
-        {
-          _id: "507f1f77bcf86cd799439053",
-          sender: "507f1f77bcf86cd799439016", // alex_attendee
-          receiver: "507f1f77bcf86cd799439015", // emma_exhibitor
-          conversationId: "507f1f77bcf86cd799439015-507f1f77bcf86cd799439016",
-          content: "Hello Emma, your CloudSoft booth was amazing! Can you provide more info about your DevOps tools?",
-          type: "text",
-          read: true,
-          createdAt: new Date("2024-06-15T16:00:00Z")
-        }
-      ];
-
-      // Filter messages for this conversation and format them for display
-      const conversationMessages = messagesFromDummy
-        .filter(message => message.conversationId === conversationId)
-        .map(message => {
-          const sender = allUsers.find(u => u._id === message.sender);
-          const isMe = message.sender === "507f1f77bcf86cd799439014"; // Assume Mike is current user for this example
-
-          return {
-            id: message._id,
-            senderId: message.sender,
-            sender: {
-              name: `${sender.profile.firstName} ${sender.profile.lastName}`,
-              avatar: '' // Will be handled with initials
-            },
-            content: message.content,
-            timestamp: message.createdAt.toISOString(),
-            type: message.type,
-            isMe
-          };
-        });
-
-      setMessages(conversationMessages);
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/messages/${conversationId}`);
+      setMessages(response.data);
     } catch (error) {
       console.error('Error fetching messages:', error);
+      setMessages([]);
     }
   };
 

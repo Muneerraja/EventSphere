@@ -4,7 +4,6 @@ import { Calendar, MapPin, Users, Edit, Trash2, Eye } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const MyExpos = () => {
   const navigate = useNavigate();
@@ -22,8 +21,7 @@ const MyExpos = () => {
       setExpos(response.data);
     } catch (error) {
       console.error('Error fetching expos:', error);
-      // Fallback to dummydata.js
-      setExpos(dummyData.expos);
+      setExpos([]);
     } finally {
       setLoading(false);
     }

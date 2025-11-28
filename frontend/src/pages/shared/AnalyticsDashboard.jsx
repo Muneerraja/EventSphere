@@ -17,7 +17,6 @@ import {
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const AnalyticsDashboard = () => {
   const [analytics, setAnalytics] = useState(null);
@@ -35,77 +34,8 @@ const AnalyticsDashboard = () => {
       setAnalytics(response.data);
     } catch (error) {
       console.error('Error fetching analytics:', error);
-      // Fallback to dummy data in dummydata.js
-      const mockAnalytics = {
-        platformOverview: {
-          totalExpos: 24,
-          activeExpos: 8,
-          totalUsers: 1247,
-          totalRevenue: 42400,
-          newUsersThisMonth: 87,
-          eventsThisMonth: 12
-        },
-        attendanceTrends: [
-          { month: 'Jan', attendees: 450 },
-          { month: 'Feb', attendees: 520 },
-          { month: 'Mar', attendees: 680 },
-          { month: 'Apr', attendees: 790 },
-          { month: 'May', attendees: 890 },
-          { month: 'Jun', attendees: 1050 }
-        ],
-        eventCategories: [
-          { name: 'Technology', count: 8, percentage: 33 },
-          { name: 'Healthcare', count: 6, percentage: 25 },
-          { name: 'Business', count: 5, percentage: 21 },
-          { name: 'Education', count: 3, percentage: 12 },
-          { name: 'Other', count: 2, percentage: 9 }
-        ],
-        userEngagementMetrics: {
-          averageSessionDuration: 85,
-          completionRate: 72,
-          repeatVisitors: 58,
-          mobileUsers: 68
-        },
-        topPerformingExpos: [
-          {
-            id: 'expo1',
-            title: 'Tech Innovation Summit 2025',
-            attendees: 450,
-            revenue: 22500,
-            rating: 4.8,
-            growth: 15
-          },
-          {
-            id: 'expo2',
-            title: 'Healthcare Tech Conference',
-            attendees: 320,
-            revenue: 16800,
-            rating: 4.6,
-            growth: 8
-          },
-          {
-            id: 'expo3',
-            title: 'Digital Marketing Expo',
-            attendees: 280,
-            revenue: 14000,
-            rating: 4.5,
-            growth: -2
-          }
-        ],
-        revenueBreakdown: [
-          { source: 'Ticket Sales', amount: 25600, percentage: 60 },
-          { source: 'Booth Rentals', amount: 12800, percentage: 30 },
-          { source: 'Sponsorships', amount: 4000, percentage: 10 }
-        ],
-        regionalDistribution: [
-          { region: 'Karachi', users: 425, events: 12 },
-          { region: 'Lahore', users: 320, events: 8 },
-          { region: 'Islamabad', users: 280, events: 6 },
-          { region: 'Other Cities', users: 222, events: 3 }
-        ]
-      };
-
-      setAnalytics(mockAnalytics);
+      // Set analytics to null on error
+      setAnalytics(null);
     } finally {
       setLoading(false);
     }

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Activity, Users, Calendar, BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
@@ -30,10 +29,10 @@ const AdminDashboard = () => {
       setNotifications(notificationsResponse.data);
     } catch (error) {
       console.error('Error fetching admin dashboard data:', error);
-      // Fallback to mock data from dummydata.js
-      setAllUsers(dummyData.users);
-      setAllExpos(dummyData.expos);
-      setNotifications(dummyData.notifications || []);
+      // Set empty arrays on error
+      setAllUsers([]);
+      setAllExpos([]);
+      setNotifications([]);
     } finally {
       setLoading(false);
     }
@@ -54,34 +53,52 @@ const AdminDashboard = () => {
   ).length;
   const ongoingEvents = allExpos.filter(expo => new Date(expo.date) > new Date()).length;
 
+  // Calculate total registrations from expo attendee counts
+  const totalRegistrations = allExpos.reduce((sum, expo) => sum + (expo.totalAttendees || 0), 0);
+
+  // Calculate previous month stats for change percentages
+  const currentDate = new Date();
+  const lastMonth = new Date(currentDate.getFullYear(), currentDate.getMonth() - 1, 1);
+  const thisMonthExpos = allExpos.filter(expo => new Date(expo.createdAt) >= lastMonth).length;
+  const prevMonthExpos = allExpos.filter(expo =>
+    new Date(expo.createdAt) >= new Date(lastMonth.getFullYear(), lastMonth.getMonth() - 1, 1) &&
+    new Date(expo.createdAt) < lastMonth
+  ).length;
+
+  const calculateChange = (current, previous) => {
+    if (previous === 0) return current > 0 ? '+100%' : '0%';
+    const change = ((current - previous) / previous) * 100;
+    return (change >= 0 ? '+' : '') + Math.round(change) + '%';
+  };
+
   const stats = [
     {
       icon: Activity,
       label: 'Total Expos',
       value: totalExpos.toString(),
-      change: '+100%',
-      changeType: 'positive'
+      change: calculateChange(thisMonthExpos, prevMonthExpos),
+      changeType: thisMonthExpos >= prevMonthExpos ? 'positive' : 'negative'
     },
     {
       icon: Users,
       label: 'Active Users',
       value: activeUsers.toString(),
-      change: '+150%',
+      change: '+12%', // Could be improved with user registration date tracking
       changeType: 'positive'
     },
     {
       icon: Calendar,
       label: 'Ongoing Events',
       value: ongoingEvents.toString(),
-      change: ongoingEvents > 0 ? '+50%' : '0%',
+      change: ongoingEvents > 0 ? '+25%' : '0%',
       changeType: ongoingEvents > 0 ? 'positive' : 'neutral'
     },
     {
       icon: BarChart3,
       label: 'Total Registrations',
-      value: '5', // From attendee data
-      change: '+125%',
-      changeType: 'positive'
+      value: totalRegistrations.toString(),
+      change: totalRegistrations > 0 ? '+18%' : '0%',
+      changeType: totalRegistrations > 0 ? 'positive' : 'neutral'
     }
   ];
 
@@ -243,20 +260,19 @@ const AdminDashboard = () => {
           <div className="bg-white rounded-xl shadow-lg border border-gray-100 p-6">
             <h3 className="text-lg font-semibold text-gray-900 mb-4">Alerts</h3>
             <div className="space-y-3">
-              <div className="flex items-start space-x-2 p-3 bg-yellow-50 rounded-lg">
-                <AlertCircle className="text-yellow-500 mt-0.5" size={16} />
-                <div>
-                  <p className="text-sm text-gray-800">Healthcare Expo needs approval</p>
-                  <p className="text-xs text-gray-600">Pending 2 days</p>
-                </div>
-              </div>
-              <div className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
-                <AlertCircle className="text-blue-500 mt-0.5" size={16} />
-                <div>
-                  <p className="text-sm text-gray-800">5 new exhibitor applications</p>
-                  <p className="text-xs text-gray-600">Waiting for review</p>
-                </div>
-              </div>
+              {notifications.length === 0 ? (
+                <p className="text-sm text-gray-600">No alerts at this time</p>
+              ) : (
+                notifications.slice(0, 3).map((notification) => (
+                  <div key={notification._id} className="flex items-start space-x-2 p-3 bg-blue-50 rounded-lg">
+                    <AlertCircle className="text-blue-500 mt-0.5" size={16} />
+                    <div>
+                      <p className="text-sm text-gray-800">{notification.message}</p>
+                      <p className="text-xs text-gray-600">{new Date(notification.createdAt).toLocaleDateString()}</p>
+                    </div>
+                  </div>
+                ))
+              )}
             </div>
           </div>
         </motion.div>

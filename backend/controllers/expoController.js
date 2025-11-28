@@ -30,20 +30,10 @@ exports.createExpo = async (req, res) => {
 
       if (!expo) return res.status(404).json({ error: 'Expo not found' });
 
-      console.log('=== DEBUG EXPO UPDATE ===');
-      console.log('User ID:', req.user ? req.user._id : 'No user ID');
-      console.log('User role:', req.user ? req.user.role : 'No user role');
-      console.log('Expo organizer:', expo.organizer.toString());
-      console.log('Is admin?', req.user && req.user.role === 'admin');
-
-      // TEMPORARILY BYPASS AUTHORIZATION FOR TESTING - REMOVE THIS IN PRODUCTION
-      console.log('=== AUTH CHECK TEMPORARILY BYPASSED FOR TESTING ===');
-      console.log('User:', req.user ? {
-        id: req.user._id,
-        role: req.user.role,
-        username: req.user.username
-      } : 'NULL_USER');
-      console.log('Expo organizer:', expo.organizer.toString());
+    // Check authorization - only admin or expo organizer can update
+    if (req.user.role !== 'admin' && expo.organizer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to update this expo' });
+    }
 
     const updateFields = { title, date, location, description, theme };
     if (image) updateFields.image = image;

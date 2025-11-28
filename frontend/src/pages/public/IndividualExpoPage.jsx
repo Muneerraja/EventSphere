@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { useParams } from 'react-router-dom';
 import { Calendar, MapPin, Users, Star, Building, Clock, User, Mail, Share2, Heart, BookOpen } from 'lucide-react';
 import axios from 'axios';
-import dummyData from '/dummydata.js';
 
 const IndividualExpoPage = () => {
   const { id } = useParams();
@@ -30,16 +29,10 @@ const IndividualExpoPage = () => {
       setSessions(sessionsResponse.data);
       } catch (error) {
         console.error('Error fetching expo details:', error);
-        // Fallback to mock data from dummydata.js
-        const fallbackExpo = dummyData.expos.find(e => e._id === id);
-        const fallbackExhibitors = dummyData.exhibitors.filter(efb => efb.expoApplication === id);
-        const fallbackSessions = dummyData.sessions.filter(s => s.expo === id);
-
-        if (fallbackExpo) {
-          setExpo(fallbackExpo);
-        }
-        setExhibitors(fallbackExhibitors);
-        setSessions(fallbackSessions);
+        // Set empty arrays on error
+        setExpo(null);
+        setExhibitors([]);
+        setSessions([]);
       } finally {
         setLoading(false);
       }
@@ -362,11 +355,7 @@ const IndividualExpoPage = () => {
                     ['A', 'B', 'C', 'D'].map((section) => (
                       <div
                         key={`${section}${row}`}
-                        className={`aspect-square rounded border-2 flex items-center justify-center text-sm font-medium ${
-                          Math.random() > 0.7
-                            ? 'bg-red-100 border-red-300 text-red-700'
-                            : 'bg-green-100 border-green-300 text-green-700'
-                        }`}
+                        className="aspect-square rounded border-2 flex items-center justify-center text-sm font-medium bg-green-100 border-green-300 text-green-700"
                       >
                         {section}{row}
                       </div>

@@ -3,7 +3,6 @@ import { motion } from 'framer-motion';
 import { Calendar, MapPin, Clock, Bookmark, Users, Star } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
-import dummyData from '/dummydata.js';
 
 const MyEvents = () => {
   const { user } = useAuth();
@@ -26,38 +25,11 @@ const MyEvents = () => {
       setAttendee(attendeeData);
     } catch (error) {
       console.error('Error fetching events:', error);
-
-      // Fallback to mock data from dummydata.js filtered by authenticated user
-      const attendee = dummyData.attendees.find(a => a.user === userId);
-      if (attendee) {
-        const registeredExpos = attendee.registeredExpos.map(expoId => {
-          const expo = dummyData.expos.find(e => e._id === expoId) || {};
-          return {
-            _id: expo._id,
-            title: expo.title,
-            date: expo.date,
-            location: expo.location,
-            description: expo.description
-          };
-        });
-
-        const bookmarkedSessions = attendee.bookmarkedSessions.map(sessionId => {
-          const session = dummyData.sessions.find(s => s._id === sessionId) || {};
-          return {
-            _id: session._id,
-            title: session.title,
-            time: session.time,
-            speaker: session.speaker,
-            topic: session.topic,
-            location: session.location
-          };
-        });
-
-        setAttendee({
-          registeredExpos,
-          bookmarkedSessions
-        });
-      }
+      // Set empty attendee data on error
+      setAttendee({
+        registeredExpos: [],
+        bookmarkedSessions: []
+      });
     } finally {
       setLoading(false);
     }

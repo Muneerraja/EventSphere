@@ -3,12 +3,24 @@ const { Session, Expo } = require('../models');
 exports.createSession = async (req, res) => {
   try {
     const { expo, title, time, speaker, topic, location } = req.body;
+
+    // Auth check: only organizer of the expo can create sessions
+    const expoDoc = await Expo.findById(expo);
+    if (!expoDoc) return res.status(404).json({ error: 'Expo not found' });
+    if (expoDoc.organizer.toString() !== req.user._id.toString()) {
+      return res.status(403).json({ error: 'Unauthorized to create sessions for this expo' });
+    }
+
     // Check conflict
     const existingSession = await Session.findOne({ expo, time, location });
     if (existingSession) return res.status(400).json({ error: 'Time and location conflict' });
 
     const session = new Session({ expo, title, time, speaker, topic, location });
     await session.save();
+
+    // Populate expo data for response
+    await session.populate('expo');
+
     res.status(201).json(session);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -23,7 +35,7 @@ exports.updateSession = async (req, res) => {
 
     // Auth check: only organizer of the expo can modify sessions
     const expo = await Expo.findById(session.expo);
-    if (expo.organizer.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+    if (expo.organizer.toString() !== req.user._id.toString()) return res.status(403).json({ error: 'Unauthorized' });
 
     // Check conflict if time/location changed
     if (time !== session.time || location !== session.location) {
@@ -54,7 +66,7 @@ exports.deleteSession = async (req, res) => {
 
     // Auth check: only organizer of the expo can delete sessions
     const expo = await Expo.findById(session.expo);
-    if (expo.organizer.toString() !== req.user.id) return res.status(403).json({ error: 'Unauthorized' });
+    if (expo.organizer.toString() !== req.user._id.toString()) return res.status(403).json({ error: 'Unauthorized' });
 
     await Session.findByIdAndDelete(req.params.id);
     res.json({ message: 'Session deleted successfully' });
