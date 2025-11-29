@@ -17,8 +17,20 @@ const MyBooths = () => {
 
   const fetchMyBooths = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/booths`);
-      setBooths(response.data);
+      // Get exhibitor profile to get assigned booths
+      const exhibitorResponse = await axios.get(`${import.meta.env.VITE_API_URL}/exhibitors/profile`);
+      const exhibitorData = exhibitorResponse.data;
+
+      // Get booth details for assigned booths
+      if (exhibitorData.booths && exhibitorData.booths.length > 0) {
+        const boothPromises = exhibitorData.booths.map(boothId =>
+          axios.get(`${import.meta.env.VITE_API_URL}/booths/${boothId}`)
+        );
+        const boothResponses = await Promise.all(boothPromises);
+        setBooths(boothResponses.map(res => res.data));
+      } else {
+        setBooths([]);
+      }
     } catch (error) {
       console.error('Error fetching booths:', error);
       // Set empty array on error

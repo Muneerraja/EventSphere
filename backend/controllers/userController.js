@@ -48,6 +48,16 @@ exports.register = async (req, res) => {
     // Send email in background
     transporter.sendMail(mailOptions).catch(console.error);
 
+    // Emit real-time event for new user registration
+    if (global.emitToRole) {
+      global.emitToRole('admin', 'user-registered', {
+        userId: user._id,
+        username: user.username,
+        role: user.role,
+        timestamp: new Date()
+      });
+    }
+
     // Return token for immediate authentication
     res.status(201).json({ token, user });
   } catch (error) {
@@ -137,11 +147,46 @@ exports.changePassword = async (req, res) => {
   }
 };
 
+exports.updateUser = async (req, res) => {
+  try {
+    const { id } = req.params;
+    const { username, email, role, isVerified } = req.body;
+
+    // Only admin can update other users
+    if (req.user.role !== 'admin') {
+      return res.status(403).json({ error: 'Unauthorized' });
+    }
+
+    // Prevent admin from modifying their own admin status
+    if (id === req.user._id && role && role !== 'admin') {
+      return res.status(400).json({ error: 'Cannot change your own admin role' });
+    }
+
+    const updateFields = {};
+    if (username) updateFields.username = username;
+    if (email) updateFields.email = email;
+    if (role) updateFields.role = role;
+    if (typeof isVerified === 'boolean') updateFields.isVerified = isVerified;
+
+    const user = await User.findByIdAndUpdate(id, updateFields, { new: true }).select('-password');
+    if (!user) return res.status(404).json({ error: 'User not found' });
+
+    res.json(user);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.deleteUser = async (req, res) => {
   try {
     // Assume only admin can delete others, or self-delete
     const userId = req.params.id || req.user.id;
     if (req.params.id && req.user.role !== 'admin') return res.status(403).json({ error: 'Unauthorized' });
+
+    // Prevent admin from deleting themselves
+    if (userId === req.user._id) {
+      return res.status(400).json({ error: 'Cannot delete your own account' });
+    }
 
     await User.findByIdAndDelete(userId);
     res.json({ message: 'User deleted successfully' });

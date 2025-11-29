@@ -38,6 +38,12 @@ io.use((socket, next) => {
 io.on('connection', (socket) => {
   console.log(`User ${socket.userId} connected`);
 
+  // Join user-specific room for personal messages and notifications
+  if (socket.userId) {
+    socket.join(`user-${socket.userId}`);
+    console.log(`User ${socket.userId} joined user-${socket.userId}`);
+  }
+
   // Join expo-specific rooms for real-time updates
   socket.on('join-expo', (expoId) => {
     socket.join(`expo-${expoId}`);
@@ -55,6 +61,28 @@ io.on('connection', (socket) => {
     console.log(`User ${socket.userId} disconnected`);
   });
 });
+
+// Global function to emit events to all connected users
+global.emitToAll = (event, data) => {
+  io.emit(event, data);
+};
+
+// Global function to emit events to specific user
+global.emitToUser = (userId, event, data) => {
+  io.to(`user-${userId}`).emit(event, data);
+};
+
+// Global function to emit events to expo room
+global.emitToExpo = (expoId, event, data) => {
+  io.to(`expo-${expoId}`).emit(event, data);
+};
+
+// Global function to emit events to users with specific roles
+global.emitToRole = (role, event, data) => {
+  // This would require tracking user roles in socket connections
+  // For now, we'll emit to all and let frontend filter
+  io.emit(event, { ...data, targetRole: role });
+};
 
 // Export io for controllers to use for broadcasting
 global.io = io;

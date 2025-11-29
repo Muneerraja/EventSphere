@@ -8,5 +8,6 @@ module.exports = {
   Booth: require('./Booth'),
   Feedback: require('./Feedback'),
   Notification: require('./Notification'),
-  Message: require('./Message')
+  Message: require('./Message'),
+  Appointment: require('./Appointment')
 };

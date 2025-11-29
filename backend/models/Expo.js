@@ -15,6 +15,10 @@ const expoSchema = new mongoose.Schema({
     assignedTo: { type: mongoose.Schema.Types.ObjectId, ref: 'Exhibitor' }
   }],
   organizer: { type: mongoose.Schema.Types.ObjectId, ref: 'User', required: true },
+  revenue: { type: Number, default: 0 },
+  totalAttendees: { type: Number, default: 0 },
+  totalExhibitors: { type: Number, default: 0 },
+  lastUpdated: { type: Date, default: Date.now },
   createdAt: { type: Date, default: Date.now }
 });
 

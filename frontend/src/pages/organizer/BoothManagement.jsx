@@ -13,9 +13,7 @@ import {
   XCircle,
   Search,
   Filter,
-  AlertTriangle,
-  Grid,
-  Layout
+  AlertTriangle
 } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext';
@@ -526,7 +524,7 @@ const BoothManagement = () => {
         </div>
       </motion.div>
 
-      {/* Booths Grid */}
+      {/* Booth List */}
       <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
         {booths.length === 0 ? (
           <div className="col-span-full bg-white rounded-xl shadow-lg border border-gray-100 p-12 text-center">

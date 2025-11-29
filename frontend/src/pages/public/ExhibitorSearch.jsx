@@ -1,16 +1,21 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
+import { useNavigate } from 'react-router-dom';
 import {
   Search,
   Building,
   Mail,
-  Eye
+  Eye,
+  MessageCircle
 } from 'lucide-react';
 import axios from 'axios';
+import { useAuth } from '../../contexts/AuthContext.jsx';
 
 
 
 const ExhibitorSearch = () => {
+  const navigate = useNavigate();
+  const { user } = useAuth();
   const [exhibitors, setExhibitors] = useState([]);
   const [loading, setLoading] = useState(true);
   const [searchQuery, setSearchQuery] = useState('');
@@ -58,6 +63,11 @@ const ExhibitorSearch = () => {
     } finally {
       setLoading(false);
     }
+  };
+
+  const handleMessageExhibitor = (exhibitor) => {
+    // Navigate to messages page with the exhibitor's user ID
+    navigate(`/dashboard/messages?user=${exhibitor.user}`);
   };
 
   // FIXED loading return
@@ -223,6 +233,16 @@ const ExhibitorSearch = () => {
                       <Eye size={16} className="mr-2" />
                       View Profile
                     </motion.button>
+                    {user && (
+                      <motion.button
+                        whileHover={{ scale: 1.02 }}
+                        whileTap={{ scale: 0.98 }}
+                        onClick={() => handleMessageExhibitor(exhibitor)}
+                        className="bg-green-600 hover:bg-green-700 text-white py-2 px-4 rounded-lg font-medium text-sm flex items-center justify-center"
+                      >
+                        <MessageCircle size={16} />
+                      </motion.button>
+                    )}
                   </div>
 
                 </div>

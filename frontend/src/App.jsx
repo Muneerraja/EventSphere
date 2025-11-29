@@ -5,6 +5,8 @@ import {
   Navigate,
 } from "react-router-dom";
 import { AuthProvider } from "./contexts/AuthContext";
+import { SocketProvider } from "./contexts/SocketContext";
+import { SettingsProvider } from "./contexts/SettingsContext";
 import { ProtectedRoute, PublicRoute } from "./contexts/ProtectedRoutes";
 import PublicLayout from "./layouts/PublicLayout";
 import DashboardLayout from "./layouts/DashboardLayout";
@@ -44,8 +46,10 @@ import "./App.css";
 
 function App() {
   return (
-    <AuthProvider>
-      <Router>
+    <SettingsProvider>
+      <AuthProvider>
+        <SocketProvider>
+          <Router>
         <Routes>
           {/* Public routes */}
           <Route path="/" element={<PublicLayout />}>
@@ -81,6 +85,16 @@ function App() {
             <Route path="admin/expos" element={
               <ProtectedRoute requiredRole="admin">
                 <ExposManagement />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/expo/:id/view" element={
+              <ProtectedRoute requiredRole="admin">
+                <ViewExpo />
+              </ProtectedRoute>
+            } />
+            <Route path="admin/expo/:id/edit" element={
+              <ProtectedRoute requiredRole="admin">
+                <EditExpo />
               </ProtectedRoute>
             } />
             <Route path="admin/users" element={
@@ -201,8 +215,10 @@ function App() {
           {/* Redirect root to public if no match */}
           <Route path="*" element={<Navigate to="/" replace />} />
         </Routes>
-      </Router>
-    </AuthProvider>
+          </Router>
+        </SocketProvider>
+      </AuthProvider>
+    </SettingsProvider>
   );
 }
 

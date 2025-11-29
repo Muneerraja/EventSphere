@@ -28,6 +28,8 @@ const SessionDetails = () => {
   const [loading, setLoading] = useState(true);
   const [rating, setRating] = useState(0);
   const [showRatingModal, setShowRatingModal] = useState(false);
+  const [registering, setRegistering] = useState(false);
+  const [error, setError] = useState('');
 
   useEffect(() => {
     fetchSessionDetails();
@@ -47,13 +49,36 @@ const SessionDetails = () => {
     }
   };
 
-  const handleRegistration = () => {
+  const handleRegistration = async () => {
     if (!isRegistered) {
-      // Handle registration logic
-      setIsRegistered(true);
+      try {
+        setRegistering(true);
+        setError('');
+
+        await axios.post(`${import.meta.env.VITE_API_URL}/attendees/register-session`, {
+          sessionId: id
+        });
+
+        setIsRegistered(true);
+
+        // Emit real-time update
+        if (window.socket) {
+          window.socket.emit('session-registered', {
+            sessionId: id,
+            userId: user.id
+          });
+        }
+
+      } catch (error) {
+        console.error('Error registering for session:', error);
+        const errorMessage = error.response?.data?.error || 'Failed to register for session';
+        setError(errorMessage);
+      } finally {
+        setRegistering(false);
+      }
     } else {
-      // Handle unregistration
-      setIsRegistered(false);
+      // Handle unregistration - could implement if needed
+      setError('Session unregistration not implemented yet');
     }
   };
 
@@ -156,15 +181,27 @@ const SessionDetails = () => {
             {/* Action Buttons */}
             <div className="lg:ml-8">
               <div className="bg-white/10 backdrop-blur-sm rounded-lg p-6 space-y-4">
+                {error && (
+                  <div className="mb-4 p-3 bg-red-50 border border-red-200 rounded-lg">
+                    <p className="text-sm text-red-700">{error}</p>
+                  </div>
+                )}
+
                 <button
                   onClick={handleRegistration}
+                  disabled={registering}
                   className={`w-full py-3 px-6 rounded-lg font-semibold transition-colors flex items-center justify-center ${
                     isRegistered
                       ? 'bg-green-600 hover:bg-green-700'
                       : 'bg-white text-blue-600 hover:bg-gray-50'
-                  }`}
+                  } ${registering ? 'opacity-75 cursor-not-allowed' : ''}`}
                 >
-                  {isRegistered ? (
+                  {registering ? (
+                    <>
+                      <div className="animate-spin rounded-full h-4 w-4 border-b-2 border-blue-600 mr-2"></div>
+                      Registering...
+                    </>
+                  ) : isRegistered ? (
                     <>
                       <Check size={18} className="mr-2" />
                       Registered

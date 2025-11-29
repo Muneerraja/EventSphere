@@ -48,29 +48,18 @@ const ApplyForExpos = () => {
     setApplying(true);
 
     try {
-      const submitData = new FormData();
-      submitData.append('company', formData.company);
-      submitData.append('products', formData.products.split(',').map(p => p.trim()));
-      submitData.append('description', formData.description);
-      submitData.append('expoId', selectedExpo._id);
-      if (logo) submitData.append('logo', logo);
-
-      const response = await fetch('/api/exhibitors/create-exhibitor', {
-        method: 'POST',
-        headers: {
-          'Authorization': `Bearer ${localStorage.getItem('token')}`
-        },
-        body: submitData
+      const response = await axios.post(`${import.meta.env.VITE_API_URL}/applications/`, {
+        type: 'exhibitor',
+        expoId: selectedExpo._id,
+        company: formData.company,
+        products: formData.products.split(',').map(p => p.trim()),
+        description: formData.description
       });
 
-      if (response.ok) {
-        alert('Application submitted successfully!');
-        setSelectedExpo(null);
-        setFormData({ company: '', products: '', description: '' });
-        setLogo(null);
-      } else {
-        throw new Error('Failed to submit application');
-      }
+      alert('Application submitted successfully!');
+      setSelectedExpo(null);
+      setFormData({ company: '', products: '', description: '' });
+      setLogo(null);
     } catch (error) {
       console.error('Error submitting application:', error);
       alert('Failed to submit application. Please try again.');

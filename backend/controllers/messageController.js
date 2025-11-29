@@ -23,6 +23,17 @@ exports.sendMessage = async (req, res) => {
     const message = new Message(messageData);
     await message.save();
 
+    // Populate the message for response
+    const populatedMessage = await message.populate(['sender', 'receiver']);
+
+    // Emit real-time message to receiver if connected
+    if (global.io) {
+      global.io.to(`user-${receiverId}`).emit('new-message', {
+        ...populatedMessage.toObject(),
+        conversationId: populatedMessage.conversationId
+      });
+    }
+
     // Also create notification for receiver
     const { createNotification } = require('./notificationController');
     await createNotification(
@@ -33,7 +44,7 @@ exports.sendMessage = async (req, res) => {
       false // Don't send email for every message
     );
 
-    res.status(201).json(await message.populate(['sender', 'receiver']));
+    res.status(201).json(populatedMessage);
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

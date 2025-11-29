@@ -3,7 +3,10 @@
 let systemSettings = {
   general: {
     siteName: 'EventSphere',
-    siteDescription: 'Professional Event Management Platform',
+    siteDescription: 'Professional event management platform for organizers, exhibitors, and attendees.',
+    contactEmail: 'info@eventsphere.com',
+    supportPhone: '+1 (555) 123-4567',
+    timezone: 'Asia/Karachi',
     maintenanceMode: false,
     registrationEnabled: true
   },

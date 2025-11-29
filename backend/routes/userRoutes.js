@@ -14,6 +14,7 @@ router.put('/profile', authenticate, userController.updateProfile);
 router.put('/change-password', authenticate, userController.changePassword);
 router.delete('/profile', authenticate, userController.deleteUser);
 router.get('/', authenticate, authorize('admin'), userController.getUsers);
+router.put('/:id', authenticate, authorize('admin'), userController.updateUser);
 router.delete('/:id', authenticate, authorize('admin'), userController.deleteUser);
 
 module.exports = router;

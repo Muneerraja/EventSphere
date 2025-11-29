@@ -11,8 +11,11 @@ import {
   Linkedin,
   Search,
 } from "lucide-react";
+import { useSettings } from "../../contexts/SettingsContext";
 
 const Footer = () => {
+  const { settings } = useSettings();
+
   const footerLinks = [
     { path: "/", label: "Home", icon: Home },
     { path: "/about", label: "About", icon: Info },
@@ -42,12 +45,10 @@ const Footer = () => {
             className="text-center"
           >
             <h3 className="text-2xl font-bold bg-gradient-to-r from-blue-400 to-green-400 bg-clip-text text-transparent mb-4">
-              EventSphere
+              {settings.general?.siteName || 'EventSphere'}
             </h3>
             <p className="text-gray-300 text-sm leading-relaxed">
-              Revolutionizing expo management with seamless organization,
-              powerful analytics, and engaging experiences for organizers,
-              exhibitors, and attendees.
+              {settings.general?.siteDescription || 'Professional event management platform for organizers, exhibitors, and attendees.'}
             </p>
           </motion.div>
 
@@ -87,8 +88,8 @@ const Footer = () => {
             <h4 className="text-lg font-semibold mb-4">Connect With Us</h4>
             <div className="space-y-4">
               <div className="text-gray-300 text-sm">
-                <p>Email: info@eventsphere.com</p>
-                <p>Phone: +1 (555) 123-4567</p>
+                <p>Email: {settings.general?.contactEmail || 'info@eventsphere.com'}</p>
+                <p>Phone: {settings.general?.supportPhone || '+1 (555) 123-4567'}</p>
               </div>
               <div className="flex justify-center space-x-4">
                 {socialLinks.map((social) => {

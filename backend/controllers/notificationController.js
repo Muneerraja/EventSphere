@@ -56,46 +56,17 @@ exports.sendSessionReminder = async (sessionId) => {
 
 exports.getNotifications = async (req, res) => {
   try {
-    console.log('=== DEBUGGING NOTIFICATIONS ===');
-    console.log('Request user object:', req.user);
-    console.log('User ID:', req.user ? req.user._id : 'No user ID');
-    console.log('User role:', req.user ? req.user.role : 'No user role');
-
     // Check if user exists and has _id
     if (!req.user || !req.user._id) {
-      console.error('No authenticated user found!');
       return res.status(401).json({ error: 'Authentication required' });
     }
 
-    console.log('Querying notifications with user ID:', req.user._id);
-
-    // Try the query and catch any mongoose-specific errors
-    let notifications;
-    try {
-      notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 });
-    } catch (dbError) {
-      console.error('Database query error:', dbError);
-      throw new Error(`Database error: ${dbError.message}`);
-    }
-
-    console.log('Successfully found notifications:', notifications.length);
+    const notifications = await Notification.find({ user: req.user._id }).sort({ createdAt: -1 });
     res.json(notifications);
 
   } catch (error) {
-    console.error('=== NOTIFICATION ERROR ===');
-    console.error('Error details:', error);
-    console.error('Error stack:', error.stack);
-    console.error('Error message:', error.message);
-
-    // Check if it's a mongoose connection error
-    if (error.name === 'MongooseError') {
-      console.error('Mongoose connection error detected');
-    }
-
-    res.status(500).json({
-      error: error.message,
-      timestamp: new Date().toISOString()
-    });
+    console.error('Error fetching notifications:', error.message);
+    res.status(500).json({ error: 'Failed to fetch notifications' });
   }
 };
 

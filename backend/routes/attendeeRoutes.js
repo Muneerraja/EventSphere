@@ -7,6 +7,7 @@ router.post('/', authenticate, attendeeController.createAttendee);
 router.put('/:id', authenticate, attendeeController.updateAttendee);
 router.delete('/:id', authenticate, attendeeController.deleteAttendee);
 router.post('/register-expo', authenticate, attendeeController.registerForExpo);
+router.post('/register-session', authenticate, attendeeController.registerForSession);
 router.post('/bookmark-session', authenticate, attendeeController.bookmarkSession);
 router.post('/schedule-appointment', authenticate, attendeeController.scheduleAppointment);
 router.get('/', authenticate, attendeeController.getAttendees);

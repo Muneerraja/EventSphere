@@ -4,20 +4,91 @@ import { Calendar, Users, TrendingUp, DollarSign, Eye, Plus, Edit, CheckCircle, 
 import { useAuth } from '../../contexts/AuthContext.jsx';
 import { useNavigate } from 'react-router-dom';
 import axios from 'axios';
+import { useSocket } from '../../contexts/SocketContext.jsx';
+
 
 const OrganizerDashboard = () => {
   const { user } = useAuth();
   const navigate = useNavigate();
+  const { onExpoCreated, onAttendeeRegistered, onNewNotification, onSessionRegistered, onExpoUpdated, isConnected } = useSocket();
   const [expos, setExpos] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
   const [activeFilter, setActiveFilter] = useState('all');
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
     if (user) {
       fetchDashboardData();
     }
   }, [user]);
+
+  // Auto-refresh every 45 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchDashboardData();
+    }, 45000); // 45 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Socket event listeners for real-time updates
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const cleanupExpoCreated = onExpoCreated((data) => {
+      console.log('New expo created:', data);
+      // Only refresh if it's this organizer's expo or if they're admin
+      if (user.role === 'admin' || data.organizer === user._id) {
+        fetchDashboardData();
+        setLastUpdate(new Date());
+        // Show notification
+        showNotification('New expo created!', 'success');
+      }
+    });
+
+    const cleanupAttendeeRegistered = onAttendeeRegistered((data) => {
+      console.log('Attendee registered:', data);
+      // Refresh if the expo belongs to this organizer
+      fetchDashboardData();
+      setLastUpdate(new Date());
+      showNotification('New attendee registered for your event!', 'info');
+    });
+
+    const cleanupNotification = onNewNotification((data) => {
+      console.log('New notification:', data);
+      // Refresh notifications
+      axios.get(`${import.meta.env.VITE_API_URL}/notifications`)
+        .then(response => {
+          setNotifications(response.data);
+          setLastUpdate(new Date());
+        })
+        .catch(error => console.error('Error fetching notifications:', error));
+    });
+
+    const cleanupSessionRegistered = onSessionRegistered((data) => {
+      console.log('Session registration:', data);
+      // Refresh data for real-time session updates
+      fetchDashboardData();
+      setLastUpdate(new Date());
+      showNotification('Attendee registered for a session!', 'info');
+    });
+
+    const cleanupExpoUpdated = onExpoUpdated((data) => {
+      console.log('Expo updated:', data);
+      fetchDashboardData();
+      setLastUpdate(new Date());
+      showNotification('Event details updated!', 'info');
+    });
+
+    return () => {
+      cleanupExpoCreated?.();
+      cleanupAttendeeRegistered?.();
+      cleanupNotification?.();
+      cleanupSessionRegistered?.();
+      cleanupExpoUpdated?.();
+    };
+  }, [isConnected, user._id, user.role, onExpoCreated, onAttendeeRegistered, onNewNotification, onSessionRegistered, onExpoUpdated]);
 
   const fetchDashboardData = async () => {
     try {
@@ -79,6 +150,13 @@ const OrganizerDashboard = () => {
   const revenueChange = calculateChange(totalRevenue, prevRevenue);
   const attendeesChange = calculateChange(totalAttendees, prevAttendees);
   const eventsChange = calculateChange(totalExpos, prevExposCount);
+
+  // Simple notification function (could be enhanced with a proper toast library)
+  const showNotification = (message, type = 'info') => {
+    console.log(`[${type.toUpperCase()}] ${message}`);
+    // For now, just log to console. In a real app, you'd use a toast library
+    // You could also add a state for notifications and display them in the UI
+  };
 
   if (loading) {
     return (
@@ -195,7 +273,7 @@ const OrganizerDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/organizer/create-expo')}
+            onClick={() => navigate('/dashboard/organizer/create-expo')}
             className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Plus size={20} />
@@ -204,7 +282,7 @@ const OrganizerDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/organizer/exhibitor-approvals')}
+            onClick={() => navigate('/dashboard/organizer/exhibitor-approvals')}
             className="flex items-center justify-center space-x-2 border border-blue-600 text-blue-600 hover:bg-blue-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Users size={20} />
@@ -213,7 +291,7 @@ const OrganizerDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
-            onClick={() => navigate('/organizer/sessions')}
+            onClick={() => navigate('/dashboard/organizer/sessions')}
             className="flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 hover:bg-gray-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Calendar size={20} />
@@ -310,7 +388,7 @@ const OrganizerDashboard = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/organizer/expo/${expo._id}/view`)}
+                    onClick={() => navigate(`/dashboard/organizer/expo/${expo._id}/view`)}
                     className="flex items-center justify-center space-x-1 bg-blue-600 hover:bg-blue-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
                     <Eye size={14} />
@@ -319,7 +397,7 @@ const OrganizerDashboard = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/organizer/expo/${expo._id}/edit`)}
+                    onClick={() => navigate(`/dashboard/organizer/expo/${expo._id}/edit`)}
                     className="flex items-center justify-center space-x-1 border border-gray-300 text-gray-700 hover:bg-gray-50 px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
                     <Edit size={14} />
@@ -328,7 +406,7 @@ const OrganizerDashboard = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/organizer/booths?expo=${expo._id}`)}
+                    onClick={() => navigate(`/dashboard/organizer/booths?expo=${expo._id}`)}
                     className="flex items-center justify-center space-x-1 bg-green-600 hover:bg-green-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
                     <Building size={14} />
@@ -337,7 +415,7 @@ const OrganizerDashboard = () => {
                   <motion.button
                     whileHover={{ scale: 1.05 }}
                     whileTap={{ scale: 0.95 }}
-                    onClick={() => navigate(`/organizer/sessions?expo=${expo._id}`)}
+                    onClick={() => navigate(`/dashboard/organizer/sessions?expo=${expo._id}`)}
                     className="flex items-center justify-center space-x-1 bg-purple-600 hover:bg-purple-700 text-white px-2 py-1.5 rounded text-xs font-medium transition-colors"
                   >
                     <Calendar size={14} />
@@ -355,7 +433,7 @@ const OrganizerDashboard = () => {
             <h3 className="text-lg font-medium text-gray-900 mb-2">No events yet</h3>
             <p className="text-gray-600 mb-6">Create your first event to get started</p>
             <button
-              onClick={() => navigate('/organizer/create-expo')}
+              onClick={() => navigate('/dashboard/organizer/create-expo')}
               className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
             >
               Create New Event

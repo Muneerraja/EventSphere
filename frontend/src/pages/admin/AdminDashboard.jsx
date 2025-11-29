@@ -3,17 +3,65 @@ import { motion } from 'framer-motion';
 import { Activity, Users, Calendar, BarChart3, TrendingUp, AlertCircle } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
+import { useSocket } from '../../contexts/SocketContext.jsx';
 
 const AdminDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
+  const { onExpoCreated, onUserRegistered, onNewNotification, isConnected } = useSocket();
   const [allUsers, setAllUsers] = useState([]);
   const [allExpos, setAllExpos] = useState([]);
   const [notifications, setNotifications] = useState([]);
   const [loading, setLoading] = useState(true);
+  const [lastUpdate, setLastUpdate] = useState(new Date());
 
   useEffect(() => {
     fetchAdminDashboardData();
   }, []);
+
+  // Auto-refresh every 30 seconds
+  useEffect(() => {
+    const interval = setInterval(() => {
+      fetchAdminDashboardData();
+    }, 30000); // 30 seconds
+
+    return () => clearInterval(interval);
+  }, []);
+
+  // Socket event listeners for real-time updates
+  useEffect(() => {
+    if (!isConnected) return;
+
+    const cleanupExpoCreated = onExpoCreated((data) => {
+      console.log('New expo created:', data);
+      fetchAdminDashboardData(); // Refresh data when new expo is created
+      setLastUpdate(new Date());
+    });
+
+    const cleanupUserRegistered = onUserRegistered((data) => {
+      console.log('New user registered:', data);
+      fetchAdminDashboardData(); // Refresh data when new user registers
+      setLastUpdate(new Date());
+    });
+
+    const cleanupNotification = onNewNotification((data) => {
+      console.log('New notification:', data);
+      // Refresh notifications
+      axios.get(`${import.meta.env.VITE_API_URL}/notifications/`)
+        .then(response => {
+          setNotifications(response.data);
+          setLastUpdate(new Date());
+        })
+        .catch(error => console.error('Error fetching notifications:', error));
+    });
+
+    return () => {
+      cleanupExpoCreated?.();
+      cleanupUserRegistered?.();
+      cleanupNotification?.();
+    };
+  }, [isConnected, onExpoCreated, onUserRegistered, onNewNotification]);
 
   const fetchAdminDashboardData = async () => {
     try {
@@ -235,6 +283,7 @@ const AdminDashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/dashboard/organizer/create-expo')}
                 className="w-full bg-blue-600 hover:bg-blue-700 text-white py-3 rounded-lg font-medium transition-colors"
               >
                 Create New Expo
@@ -242,6 +291,7 @@ const AdminDashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/dashboard/admin/users')}
                 className="w-full border border-blue-600 text-blue-600 hover:bg-blue-50 py-3 rounded-lg font-medium transition-colors"
               >
                 Manage Users
@@ -249,6 +299,7 @@ const AdminDashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/dashboard/analytics')}
                 className="w-full border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 rounded-lg font-medium transition-colors"
               >
                 View Analytics

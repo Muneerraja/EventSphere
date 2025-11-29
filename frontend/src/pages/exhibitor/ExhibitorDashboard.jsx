@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { Calendar, Package, Eye, CheckCircle, Clock, AlertCircle, Plus, Edit, FileText } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const ExhibitorDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [applications, setApplications] = useState([]);
   const [booths, setBooths] = useState([]);
   const [loading, setLoading] = useState(true);
@@ -198,6 +200,7 @@ const ExhibitorDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/dashboard/exhibitor/apply')}
             className="flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Plus size={20} />
@@ -206,6 +209,7 @@ const ExhibitorDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/dashboard/exhibitor/booths')}
             className="flex items-center justify-center space-x-2 border border-blue-600 text-blue-600 hover:bg-blue-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Package size={20} />
@@ -214,6 +218,7 @@ const ExhibitorDashboard = () => {
           <motion.button
             whileHover={{ scale: 1.02 }}
             whileTap={{ scale: 0.98 }}
+            onClick={() => navigate('/dashboard/analytics')}
             className="flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 hover:bg-gray-50 py-4 px-6 rounded-lg font-medium transition-colors"
           >
             <Eye size={20} />
@@ -411,11 +416,19 @@ const ExhibitorDashboard = () => {
         <h2 className="text-xl font-semibold text-gray-900 mb-4">Recent Activity</h2>
         <div className="space-y-4">
           {[
-            { type: 'application_submitted', message: 'Application submitted for Tech Summit 2025', time: '2 hours ago', status: 'success' },
-            { type: 'booth_assigned', message: 'Booth A1 assigned for Tech Summit 2025', time: '1 day ago', status: 'success' },
-            { type: 'visitor_interaction', message: '6 new visitor interactions at your booth', time: '2 days ago', status: 'info' },
-            { type: 'inquiry_received', message: 'New inquiry from TechCorp Solutions', time: '3 days ago', status: 'info' }
-          ].map((activity, index) => (
+            ...applications.slice(0, 2).map(app => ({
+              type: 'application',
+              message: `Application ${app.status} for ${app.expoTitle}`,
+              time: new Date(app.submittedDate).toLocaleDateString(),
+              status: app.status === 'approved' ? 'success' : app.status === 'pending' ? 'info' : 'warning'
+            })),
+            ...booths.slice(0, 2).map(booth => ({
+              type: 'booth',
+              message: `Booth ${booth.boothId} assigned for ${booth.expoTitle}`,
+              time: new Date(booth.lastUpdated).toLocaleDateString(),
+              status: 'success'
+            }))
+          ].sort((a, b) => new Date(b.time) - new Date(a.time)).slice(0, 4).map((activity, index) => (
             <motion.div
               key={index}
               initial={{ opacity: 0, x: -20 }}
@@ -426,7 +439,8 @@ const ExhibitorDashboard = () => {
               <div className="flex items-center space-x-3">
                 <div className={`w-2 h-2 rounded-full ${
                   activity.status === 'success' ? 'bg-green-500' :
-                  activity.status === 'info' ? 'bg-blue-500' : 'bg-gray-500'
+                  activity.status === 'info' ? 'bg-blue-500' :
+                  activity.status === 'warning' ? 'bg-yellow-500' : 'bg-gray-500'
                 }`} />
                 <span className="text-gray-800">{activity.message}</span>
               </div>

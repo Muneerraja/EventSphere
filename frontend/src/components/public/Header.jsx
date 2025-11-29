@@ -3,10 +3,12 @@ import { Link } from "react-router-dom";
 import { Menu, X, Calendar, Home, Info, Mail, LogIn, LayoutDashboard, Search } from "lucide-react";
 import { useState } from "react";
 import { useAuth } from "../../contexts/AuthContext";
+import { useSettings } from "../../contexts/SettingsContext";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
   const { isAuthenticated } = useAuth();
+  const { settings } = useSettings();
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -31,7 +33,7 @@ const Header = () => {
               whileHover={{ scale: 1.05 }}
               className="text-2xl font-bold bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent"
             >
-              EventSphere
+              {settings.general?.siteName || 'EventSphere'}
             </motion.div>
           </Link>
 

@@ -1,43 +1,25 @@
 import { useState, useEffect } from 'react';
 import { motion } from 'framer-motion';
 import { Save, RefreshCw, Shield, Mail, Database, Palette, Globe, Settings } from 'lucide-react';
-import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useSettings } from '../../contexts/SettingsContext.jsx';
 
 const SystemSettings = () => {
   const { user } = useAuth();
-  const [settings, setSettings] = useState({});
-  const [loading, setLoading] = useState(true);
+  const { settings, loading, updateSettings } = useSettings();
+  const [localSettings, setLocalSettings] = useState({});
   const [saving, setSaving] = useState(false);
   const [activeTab, setActiveTab] = useState('general');
   const [hasChanges, setHasChanges] = useState(false);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
-
-  const fetchSettings = async () => {
-    try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/settings/`);
-      setSettings(response.data);
-    } catch (error) {
-      console.error('Error fetching settings:', error);
-      // Set empty settings object on error
-      setSettings({
-        general: {},
-        security: {},
-        email: {},
-        database: {},
-        appearance: {},
-        features: {}
-      });
-    } finally {
-      setLoading(false);
+    if (!loading && settings) {
+      setLocalSettings(settings);
     }
-  };
+  }, [settings, loading]);
 
   const updateSetting = (category, key, value) => {
-    setSettings(prev => ({
+    setLocalSettings(prev => ({
       ...prev,
       [category]: {
         ...prev[category],
@@ -50,8 +32,7 @@ const SystemSettings = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      await updateSettings(localSettings);
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving settings:', error);
@@ -61,7 +42,7 @@ const SystemSettings = () => {
   };
 
   const handleReset = () => {
-    fetchSettings();
+    setLocalSettings(settings);
     setHasChanges(false);
   };
 
@@ -157,7 +138,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Site Title</label>
                   <input
                     type="text"
-                    value={settings.general?.siteTitle || ''}
+                    value={localSettings.general?.siteTitle || ''}
                     onChange={(e) => updateSetting('general', 'siteTitle', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -166,7 +147,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Contact Email</label>
                   <input
                     type="email"
-                    value={settings.general?.contactEmail || ''}
+                    value={localSettings.general?.contactEmail || ''}
                     onChange={(e) => updateSetting('general', 'contactEmail', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -175,7 +156,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Support Phone</label>
                   <input
                     type="text"
-                    value={settings.general?.supportPhone || ''}
+                    value={localSettings.general?.supportPhone || ''}
                     onChange={(e) => updateSetting('general', 'supportPhone', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -183,7 +164,7 @@ const SystemSettings = () => {
                 <div>
                   <label className="block text-sm font-medium text-gray-700 mb-2">Timezone</label>
                   <select
-                    value={settings.general?.timezone || 'Asia/Karachi'}
+                    value={localSettings.general?.timezone || 'Asia/Karachi'}
                     onChange={(e) => updateSetting('general', 'timezone', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
@@ -197,7 +178,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Site Description</label>
                   <textarea
                     rows={3}
-                    value={settings.general?.siteDescription || ''}
+                    value={localSettings.general?.siteDescription || ''}
                     onChange={(e) => updateSetting('general', 'siteDescription', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -206,7 +187,7 @@ const SystemSettings = () => {
                   <input
                     type="checkbox"
                     id="maintenanceMode"
-                    checked={settings.general?.maintenanceMode || false}
+                    checked={localSettings.general?.maintenanceMode || false}
                     onChange={(e) => updateSetting('general', 'maintenanceMode', e.target.checked)}
                     className="mr-3"
                   />
@@ -226,7 +207,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Session Timeout (minutes)</label>
                   <input
                     type="number"
-                    value={settings.security?.sessionTimeout || 30}
+                    value={localSettings.security?.sessionTimeout || 30}
                     onChange={(e) => updateSetting('security', 'sessionTimeout', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -235,7 +216,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Password Minimum Length</label>
                   <input
                     type="number"
-                    value={settings.security?.passwordMinLength || 8}
+                    value={localSettings.security?.passwordMinLength || 8}
                     onChange={(e) => updateSetting('security', 'passwordMinLength', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -244,7 +225,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Max Login Attempts</label>
                   <input
                     type="number"
-                    value={settings.security?.maxLoginAttempts || 5}
+                    value={localSettings.security?.maxLoginAttempts || 5}
                     onChange={(e) => updateSetting('security', 'maxLoginAttempts', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -253,7 +234,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">Lockout Duration (minutes)</label>
                   <input
                     type="number"
-                    value={settings.security?.lockoutDuration || 15}
+                    value={localSettings.security?.lockoutDuration || 15}
                     onChange={(e) => updateSetting('security', 'lockoutDuration', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -262,7 +243,7 @@ const SystemSettings = () => {
                   <input
                     type="checkbox"
                     id="requireTwoFactor"
-                    checked={settings.security?.requireTwoFactor || false}
+                    checked={localSettings.security?.requireTwoFactor || false}
                     onChange={(e) => updateSetting('security', 'requireTwoFactor', e.target.checked)}
                     className="mr-3"
                   />
@@ -274,7 +255,7 @@ const SystemSettings = () => {
                   <input
                     type="checkbox"
                     id="enableCaptcha"
-                    checked={settings.security?.enableCaptcha || true}
+                    checked={localSettings.security?.enableCaptcha || true}
                     onChange={(e) => updateSetting('security', 'enableCaptcha', e.target.checked)}
                     className="mr-3"
                   />
@@ -294,7 +275,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Host</label>
                   <input
                     type="text"
-                    value={settings.email?.smtpHost || ''}
+                    value={localSettings.email?.smtpHost || ''}
                     onChange={(e) => updateSetting('email', 'smtpHost', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -303,7 +284,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Port</label>
                   <input
                     type="number"
-                    value={settings.email?.smtpPort || 587}
+                    value={localSettings.email?.smtpPort || 587}
                     onChange={(e) => updateSetting('email', 'smtpPort', parseInt(e.target.value))}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -312,7 +293,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">SMTP Username</label>
                   <input
                     type="text"
-                    value={settings.email?.smtpUsername || ''}
+                    value={localSettings.email?.smtpUsername || ''}
                     onChange={(e) => updateSetting('email', 'smtpUsername', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -321,7 +302,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">From Email</label>
                   <input
                     type="email"
-                    value={settings.email?.fromEmail || ''}
+                    value={localSettings.email?.fromEmail || ''}
                     onChange={(e) => updateSetting('email', 'fromEmail', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -330,7 +311,7 @@ const SystemSettings = () => {
                   <label className="block text-sm font-medium text-gray-700 mb-2">From Name</label>
                   <input
                     type="text"
-                    value={settings.email?.fromName || ''}
+                    value={localSettings.email?.fromName || ''}
                     onChange={(e) => updateSetting('email', 'fromName', e.target.value)}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   />
@@ -339,7 +320,7 @@ const SystemSettings = () => {
                   <input
                     type="checkbox"
                     id="smtpUseTLS"
-                    checked={settings.email?.smtpUseTLS || true}
+                    checked={localSettings.email?.smtpUseTLS || true}
                     onChange={(e) => updateSetting('email', 'smtpUseTLS', e.target.checked)}
                     className="mr-3"
                   />

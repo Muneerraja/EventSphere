@@ -72,8 +72,11 @@ const Accounts = () => {
   const handleSave = async () => {
     setSaving(true);
     try {
-      // Simulate API call
-      await new Promise(resolve => setTimeout(resolve, 1500));
+      if (activeTab === 'profile') {
+        await updateProfile(profile);
+      }
+      // For now, settings changes are handled locally
+      // In a full implementation, you'd save settings to backend
       setHasChanges(false);
     } catch (error) {
       console.error('Error saving:', error);

@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { MessageSquare, Send, Search, User, MoreVertical, Paperclip, Phone, Video, Users } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useSocket } from '../../contexts/SocketContext.jsx';
 
 const MessagesCenter = () => {
   const { user } = useAuth();
+  const { onNewMessage } = useSocket();
   const [conversations, setConversations] = useState([]);
   const [activeConversation, setActiveConversation] = useState(null);
   const [messages, setMessages] = useState([]);
@@ -24,6 +26,32 @@ const MessagesCenter = () => {
       fetchMessages(activeConversation.id);
     }
   }, [activeConversation]);
+
+  // Listen for real-time messages
+  useEffect(() => {
+    const unsubscribe = onNewMessage((messageData) => {
+      // Check if the message belongs to the current active conversation
+      if (activeConversation && messageData.conversationId === activeConversation.conversationId) {
+        setMessages(prev => [...prev, messageData]);
+      }
+
+      // Update conversations list with new message
+      setConversations(prev =>
+        prev.map(conv =>
+          conv.conversationId === messageData.conversationId
+            ? {
+                ...conv,
+                lastMessage: messageData.content,
+                lastMessageTime: messageData.createdAt,
+                unreadCount: conv.conversationId === activeConversation?.conversationId ? 0 : (conv.unreadCount || 0) + 1
+              }
+            : conv
+        )
+      );
+    });
+
+    return unsubscribe;
+  }, [onNewMessage, activeConversation]);
 
   const fetchConversations = async () => {
     try {
@@ -53,28 +81,38 @@ const MessagesCenter = () => {
     conv.lastMessage.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
-  const handleSendMessage = () => {
-    if (newMessage.trim()) {
-      const message = {
-        id: Date.now().toString(),
-        senderId: 'me',
-        sender: { name: 'Current User', avatar: '/api/placeholder/32/32' },
-        content: newMessage,
-        timestamp: new Date().toISOString(),
-        type: 'text'
-      };
+  const handleSendMessage = async () => {
+    if (newMessage.trim() && activeConversation) {
+      try {
+        const response = await axios.post(`${import.meta.env.VITE_API_URL}/messages/send`, {
+          receiverId: activeConversation.participant._id,
+          content: newMessage.trim(),
+          type: 'text'
+        });
 
-      setMessages(prev => [...prev, message]);
-      setNewMessage('');
+        // Add the sent message to local state
+        const sentMessage = {
+          ...response.data,
+          senderId: response.data.sender._id,
+          sender: response.data.sender,
+          timestamp: response.data.createdAt
+        };
 
-      // Update last message in conversation
-      setConversations(prev =>
-        prev.map(conv =>
-          conv.id === activeConversation.id
-            ? { ...conv, lastMessage: newMessage, timestamp: message.timestamp, unreadCount: 0 }
-            : conv
-        )
-      );
+        setMessages(prev => [...prev, sentMessage]);
+        setNewMessage('');
+
+        // Update last message in conversation
+        setConversations(prev =>
+          prev.map(conv =>
+            conv.conversationId === activeConversation.conversationId
+              ? { ...conv, lastMessage: newMessage.trim(), lastMessageTime: new Date().toISOString(), unreadCount: 0 }
+              : conv
+          )
+        );
+      } catch (error) {
+        console.error('Error sending message:', error);
+        alert('Failed to send message. Please try again.');
+      }
     }
   };
 

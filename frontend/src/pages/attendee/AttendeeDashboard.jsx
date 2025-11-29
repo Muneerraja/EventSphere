@@ -3,9 +3,11 @@ import { motion } from 'framer-motion';
 import { Calendar, Star, Heart, Clock, MapPin, Users, TrendingUp, BookOpen, Bell, Search, Eye } from 'lucide-react';
 import axios from 'axios';
 import { useAuth } from '../../contexts/AuthContext.jsx';
+import { useNavigate } from 'react-router-dom';
 
 const AttendeeDashboard = () => {
   const { user } = useAuth();
+  const navigate = useNavigate();
   const [profile, setProfile] = useState(user || null);
   const [registeredEvents, setRegisteredEvents] = useState([]);
   const [bookmarkedSessions, setBookmarkedSessions] = useState([]);
@@ -22,16 +24,42 @@ const AttendeeDashboard = () => {
 
   const fetchAttendeeData = async () => {
     try {
-      // Fetch real attendee data from backend APIs
-      const [exposResponse, sessionsResponse] = await Promise.all([
-        axios.get(`${import.meta.env.VITE_API_URL}/expos/`),
-        axios.get(`${import.meta.env.VITE_API_URL}/sessions/`)
-      ]);
+      // Fetch attendee profile with registered events and bookmarked sessions
+      const attendeeResponse = await axios.get(`${import.meta.env.VITE_API_URL}/attendees/public/profile/${user._id}`);
+      const attendeeData = attendeeResponse.data;
 
-      const allExpos = exposResponse.data;
-      const allSessions = sessionsResponse.data;
+      // Fetch all public expos for discovery
+      const allExposResponse = await axios.get(`${import.meta.env.VITE_API_URL}/expos/public/expos`);
+      const allExpos = allExposResponse.data;
 
-      // For now, show all expos as available events (no real registration tracking yet)
+      // Fetch notifications
+      const notificationsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/notifications`);
+      const notifications = notificationsResponse.data || [];
+
+      // Transform registered events
+      const registeredEvents = attendeeData.registeredExpos ? attendeeData.registeredExpos.map(expo => ({
+        _id: expo._id,
+        title: expo.title,
+        date: expo.date,
+        location: expo.location,
+        description: expo.description,
+        theme: expo.theme,
+        organizer: expo.organizer,
+        status: new Date(expo.date) > new Date() ? 'upcoming' : 'passed'
+      })) : [];
+
+      // Transform bookmarked sessions
+      const bookmarkedSessions = attendeeData.bookmarkedSessions ? attendeeData.bookmarkedSessions.map(session => ({
+        _id: session._id,
+        title: session.title,
+        time: session.time,
+        speaker: session.speaker,
+        topic: session.topic,
+        location: session.location,
+        expo: session.expo
+      })) : [];
+
+      // Transform upcoming events for discovery
       const availableEvents = allExpos.map(expo => ({
         _id: expo._id,
         title: expo.title,
@@ -41,15 +69,12 @@ const AttendeeDashboard = () => {
         theme: expo.theme,
         organizer: expo.organizer,
         status: new Date(expo.date) > new Date() ? 'upcoming' : 'passed',
-        sessionCount: allSessions.filter(session => session.expo === expo._id).length
+        isRegistered: registeredEvents.some(reg => reg._id === expo._id)
       }));
-
-      // For now, no real bookmarked sessions tracking
-      const bookmarkedSessions = [];
 
       // Show upcoming events as recommendations
       const recommendations = allExpos
-        .filter(expo => new Date(expo.date) > new Date())
+        .filter(expo => new Date(expo.date) > new Date() && !registeredEvents.some(reg => reg._id === expo._id))
         .slice(0, 3)
         .map(expo => ({
           _id: expo._id,
@@ -59,11 +84,8 @@ const AttendeeDashboard = () => {
           reason: 'Upcoming event you might be interested in'
         }));
 
-      // For now, no notifications
-      const notifications = [];
-
       setProfile(user);
-      setRegisteredEvents([]); // No real registration tracking yet
+      setRegisteredEvents(registeredEvents);
       setBookmarkedSessions(bookmarkedSessions);
       setRecommendations(recommendations);
       setUpcomingEvents(availableEvents);
@@ -79,6 +101,25 @@ const AttendeeDashboard = () => {
       setNotifications([]);
     } finally {
       setLoading(false);
+    }
+  };
+
+  const toggleBookmark = async (sessionId) => {
+    try {
+      const isBookmarked = bookmarkedSessions.some(s => s._id === sessionId);
+
+      if (isBookmarked) {
+        // Unbookmark - remove from bookmarked sessions
+        await axios.delete(`${import.meta.env.VITE_API_URL}/attendees/unbookmark-session/${sessionId}`);
+        setBookmarkedSessions(prev => prev.filter(s => s._id !== sessionId));
+      } else {
+        // Bookmark - add to bookmarked sessions
+        await axios.post(`${import.meta.env.VITE_API_URL}/attendees/bookmark-session`, { sessionId });
+        fetchAttendeeData(); // Refetch to get updated bookmarks
+      }
+    } catch (error) {
+      console.error('Error toggling bookmark:', error);
+      alert('Failed to update bookmark. Please try again.');
     }
   };
 
@@ -224,7 +265,7 @@ const AttendeeDashboard = () => {
                         </div>
                         <div className="flex items-center">
                           <BookOpen size={16} className="mr-2" />
-                          <span>{event.sessionCount} sessions available</span>
+                          <span>Sessions available</span>
                         </div>
                       </div>
                     </div>
@@ -249,7 +290,10 @@ const AttendeeDashboard = () => {
                 <Calendar size={48} className="mx-auto text-gray-400 mb-4" />
                 <h3 className="text-lg font-medium text-gray-900 mb-2">No registered events yet</h3>
                 <p className="text-gray-600 mb-6">Discover and register for upcoming expos</p>
-                <button className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors">
+                <button
+                  onClick={() => navigate('/expos')}
+                  className="bg-blue-600 hover:bg-blue-700 text-white px-6 py-3 rounded-lg font-medium transition-colors"
+                >
                   Browse Events
                 </button>
               </div>
@@ -288,11 +332,14 @@ const AttendeeDashboard = () => {
                   </div>
 
                   <div className="flex items-center space-x-3">
-                    <button className="text-red-500 hover:text-red-700">
-                      <Heart size={20} fill="currentColor" />
+                    <button
+                      onClick={() => toggleBookmark(session._id)}
+                      className={`${bookmarkedSessions.some(s => s._id === session._id) ? 'text-red-500' : 'text-gray-400'} hover:text-red-500`}
+                    >
+                      <Heart size={20} fill={bookmarkedSessions.some(s => s._id === session._id) ? "currentColor" : "none"} />
                     </button>
                     <button className="bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg text-sm font-medium">
-                      Register
+                      View Details
                     </button>
                   </div>
                 </motion.div>
@@ -379,6 +426,7 @@ const AttendeeDashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/expos')}
                 className="w-full flex items-center justify-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white py-3 px-4 rounded-lg font-medium transition-colors"
               >
                 <Search size={18} />
@@ -387,18 +435,20 @@ const AttendeeDashboard = () => {
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/dashboard/attendee/my-events')}
                 className="w-full flex items-center justify-center space-x-2 border border-blue-600 text-blue-600 hover:bg-blue-50 py-3 px-4 rounded-lg font-medium transition-colors"
               >
                 <Heart size={18} />
-                <span>My Bookmarks</span>
+                <span>My Events</span>
               </motion.button>
               <motion.button
                 whileHover={{ scale: 1.02 }}
                 whileTap={{ scale: 0.98 }}
+                onClick={() => navigate('/dashboard/attendee/discovery')}
                 className="w-full flex items-center justify-center space-x-2 border border-gray-300 text-gray-700 hover:bg-gray-50 py-3 px-4 rounded-lg font-medium transition-colors"
               >
                 <Clock size={18} />
-                <span>My Schedule</span>
+                <span>Event Discovery</span>
               </motion.button>
             </div>
           </motion.div>

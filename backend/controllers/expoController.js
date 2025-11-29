@@ -2,8 +2,19 @@ const { Expo, Attendee, Session } = require('../models');
 
 exports.createExpo = async (req, res) => {
   try {
-    const { title, date, location, description, theme } = req.body;
+    const { title, date, location, description, theme, floorPlan } = req.body;
     const image = req.file ? req.file.filename : null;
+
+    // Parse floor plan data if provided
+    let parsedFloorPlan = [];
+    if (floorPlan) {
+      try {
+        parsedFloorPlan = JSON.parse(floorPlan);
+      } catch (parseError) {
+        console.error('Error parsing floor plan:', parseError);
+        // Continue without floor plan if parsing fails
+      }
+    }
 
     const expo = new Expo({
       title,
@@ -12,10 +23,22 @@ exports.createExpo = async (req, res) => {
       description,
       theme,
       image,
+      floorPlan: parsedFloorPlan,
       organizer: req.user._id
     });
 
     await expo.save();
+
+    // Emit real-time event for new expo creation
+    if (global.emitToAll) {
+      global.emitToAll('expo-created', {
+        expoId: expo._id,
+        title: expo.title,
+        organizer: req.user._id,
+        timestamp: new Date()
+      });
+    }
+
     res.status(201).json(expo);
   } catch (error) {
     res.status(500).json({ error: error.message });
@@ -24,7 +47,7 @@ exports.createExpo = async (req, res) => {
 
   exports.updateExpo = async (req, res) => {
     try {
-      const { title, date, location, description, theme } = req.body;
+      const { title, date, location, description, theme, floorPlan } = req.body;
       const image = req.file ? req.file.filename : undefined;
       const expo = await Expo.findById(req.params.id);
 
@@ -35,7 +58,18 @@ exports.createExpo = async (req, res) => {
       return res.status(403).json({ error: 'Unauthorized to update this expo' });
     }
 
-    const updateFields = { title, date, location, description, theme };
+    // Parse floor plan data if provided
+    let parsedFloorPlan = expo.floorPlan; // Keep existing by default
+    if (floorPlan) {
+      try {
+        parsedFloorPlan = JSON.parse(floorPlan);
+      } catch (parseError) {
+        console.error('Error parsing floor plan:', parseError);
+        // Keep existing floor plan if parsing fails
+      }
+    }
+
+    const updateFields = { title, date, location, description, theme, floorPlan: parsedFloorPlan };
     if (image) updateFields.image = image;
 
     const updatedExpo = await Expo.findByIdAndUpdate(req.params.id, updateFields, { new: true });

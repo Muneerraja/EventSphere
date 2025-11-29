@@ -1,7 +1,10 @@
 import { motion } from 'framer-motion';
 import { Users, Target, Lightbulb, Shield, TrendingUp, Globe } from 'lucide-react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 const About = () => {
+  const { settings } = useSettings();
+
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -68,13 +71,11 @@ const About = () => {
             <h1 className="text-4xl md:text-6xl font-bold text-gray-900 mb-6">
               About{' '}
               <span className="bg-gradient-to-r from-blue-600 to-green-600 bg-clip-text text-transparent">
-                EventSphere
+                {settings.general?.siteName || 'EventSphere'}
               </span>
             </h1>
             <p className="text-xl text-gray-600 max-w-4xl mx-auto leading-relaxed">
-              We're revolutionizing the expo management industry by providing seamless, efficient, and engaging experiences
-              for organizers, exhibitors, and attendees worldwide. Our platform bridges the gap between traditional event
-              management and modern technology-driven solutions.
+              {settings.general?.siteDescription || 'Professional event management platform for organizers, exhibitors, and attendees.'}
             </p>
           </motion.div>
         </div>

@@ -1,8 +1,10 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import { useSettings } from '../../contexts/SettingsContext';
 
 const Contact = () => {
+  const { settings } = useSettings();
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -44,13 +46,13 @@ const Contact = () => {
     {
       icon: Mail,
       title: 'Email Us',
-      content: 'info@eventsphere.com',
+      content: settings.general?.contactEmail || 'info@eventsphere.com',
       description: 'Send us an email for general inquiries'
     },
     {
       icon: Phone,
       title: 'Call Us',
-      content: '+1 (555) 123-4567',
+      content: settings.general?.supportPhone || '+1 (555) 123-4567',
       description: 'Monday to Friday, 9AM - 6PM EST'
     },
     {

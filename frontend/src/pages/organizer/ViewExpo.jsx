@@ -12,6 +12,10 @@ const ViewExpo = () => {
   const [expo, setExpo] = useState(null);
   const [loading, setLoading] = useState(true);
 
+  // Determine if user can edit/delete based on role and ownership
+  const canEdit = user.role === 'admin' || (user.role === 'organizer' && expo?.organizer === user._id);
+  const canDelete = user.role === 'admin' || (user.role === 'organizer' && expo?.organizer === user._id);
+
   useEffect(() => {
     fetchExpoDetails();
   }, [id]);
@@ -78,26 +82,33 @@ const ViewExpo = () => {
             <p className="text-gray-600">Detailed information about your event</p>
           </div>
         </div>
-        <div className="flex items-center space-x-3">
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={() => navigate(`/dashboard/organizer/expo/${id}/edit`)}
-            className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            <Edit3 size={16} />
-            <span>Edit Expo</span>
-          </motion.button>
-          <motion.button
-            whileHover={{ scale: 1.05 }}
-            whileTap={{ scale: 0.95 }}
-            onClick={handleDelete}
-            className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
-          >
-            <Trash2 size={16} />
-            <span>Delete Expo</span>
-          </motion.button>
-        </div>
+        {/* Action buttons - only show if user has permissions */}
+        {(canEdit || canDelete) && (
+          <div className="flex items-center space-x-3">
+            {canEdit && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={() => navigate(`/dashboard/${user.role}/expo/${id}/edit`)}
+                className="flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <Edit3 size={16} />
+                <span>Edit Expo</span>
+              </motion.button>
+            )}
+            {canDelete && (
+              <motion.button
+                whileHover={{ scale: 1.05 }}
+                whileTap={{ scale: 0.95 }}
+                onClick={handleDelete}
+                className="flex items-center space-x-2 bg-red-600 hover:bg-red-700 text-white px-4 py-2 rounded-lg font-medium transition-colors"
+              >
+                <Trash2 size={16} />
+                <span>Delete Expo</span>
+              </motion.button>
+            )}
+          </div>
+        )}
       </motion.div>
 
       {/* Expo Details */}

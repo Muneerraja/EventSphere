@@ -106,13 +106,19 @@ const ExhibitorApprovals = () => {
     setFilteredApplications(filtered);
   };
 
-  const handleApprove = (application) => {
-    // In a real app, this would make an API call
-    setApplications(prev =>
-      prev.map(app =>
-        app.id === application.id ? { ...app, status: 'approved', approvedDate: new Date().toISOString() } : app
-      )
-    );
+  const handleApprove = async (application) => {
+    try {
+      await axios.put(`${import.meta.env.VITE_API_URL}/applications/${application.id}/approve`);
+      // Update local state
+      setApplications(prev =>
+        prev.map(app =>
+          app.id === application.id ? { ...app, status: 'approved', approvedDate: new Date().toISOString() } : app
+        )
+      );
+    } catch (error) {
+      console.error('Error approving application:', error);
+      alert('Failed to approve application. Please try again.');
+    }
   };
 
   const handleReject = (application) => {
@@ -120,30 +126,52 @@ const ExhibitorApprovals = () => {
     setShowRejectModal(true);
   };
 
-  const submitRejection = () => {
+  const submitRejection = async () => {
     if (rejectingApplication && rejectReason.trim()) {
-      setApplications(prev =>
-        prev.map(app =>
-          app.id === rejectingApplication.id
-            ? { ...app, status: 'rejected', rejectionReason: rejectReason, rejectedDate: new Date().toISOString() }
-            : app
-        )
-      );
-      setShowRejectModal(false);
-      setRejectReason('');
-      setRejectingApplication(null);
+      try {
+        await axios.put(`${import.meta.env.VITE_API_URL}/applications/${rejectingApplication.id}/reject`, {
+          reason: rejectReason
+        });
+        // Update local state
+        setApplications(prev =>
+          prev.map(app =>
+            app.id === rejectingApplication.id
+              ? { ...app, status: 'rejected', rejectionReason: rejectReason, rejectedDate: new Date().toISOString() }
+              : app
+          )
+        );
+        setShowRejectModal(false);
+        setRejectReason('');
+        setRejectingApplication(null);
+      } catch (error) {
+        console.error('Error rejecting application:', error);
+        alert('Failed to reject application. Please try again.');
+      }
     }
   };
 
-  const handleBulkApprove = () => {
-    setApplications(prev =>
-      prev.map(app =>
-        selectedApplications.includes(app.id)
-          ? { ...app, status: 'approved', approvedDate: new Date().toISOString() }
-          : app
-      )
-    );
-    setSelectedApplications([]);
+  const handleBulkApprove = async () => {
+    try {
+      // Approve all selected applications
+      await Promise.all(
+        selectedApplications.map(appId =>
+          axios.put(`${import.meta.env.VITE_API_URL}/applications/${appId}/approve`)
+        )
+      );
+
+      // Update local state
+      setApplications(prev =>
+        prev.map(app =>
+          selectedApplications.includes(app.id)
+            ? { ...app, status: 'approved', approvedDate: new Date().toISOString() }
+            : app
+        )
+      );
+      setSelectedApplications([]);
+    } catch (error) {
+      console.error('Error bulk approving applications:', error);
+      alert('Failed to approve some applications. Please try again.');
+    }
   };
 
   const getStatusColor = (status) => {
