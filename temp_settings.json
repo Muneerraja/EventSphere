@@ -1,0 +1,10 @@
+{
+  "mcpServers": {
+    "github.com/AgentDeskAI/browser-tools-mcp": {
+      "command": "npx",
+      "args": ["@agentdeskai/browser-tools-mcp@latest"],
+      "disabled": false,
+      "autoApprove": []
+    }
+  }
+}

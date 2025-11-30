@@ -95,18 +95,62 @@ exports.rejectExhibitor = async (req, res) => {
 
 exports.searchExhibitors = async (req, res) => {
   try {
-    const { category, keywords } = req.query;
-    let query = {};
+    const { category, keywords, location, status = 'approved', sortBy = 'company', sortOrder = 'asc', expoId } = req.query;
+    let query = { status };
 
-    if (category) query.products = { $in: [category] };
-    if (keywords) query.$or = [
-      { company: { $regex: keywords, $options: 'i' } },
-      { description: { $regex: keywords, $options: 'i' } },
-      { products: { $in: [new RegExp(keywords, 'i')] } }
-    ];
+    // Filter by specific expo if provided
+    if (expoId) {
+      query.expoApplication = expoId;
+    }
 
-    const exhibitors = await Exhibitor.find(query).populate('user');
-    res.json(exhibitors);
+    // Search functionality
+    if (keywords) {
+      query.$or = [
+        { company: { $regex: keywords, $options: 'i' } },
+        { description: { $regex: keywords, $options: 'i' } },
+        { contact: { $regex: keywords, $options: 'i' } }
+      ];
+    }
+
+    // Filter by category/products
+    if (category && category !== 'all') {
+      query.products = { $in: [new RegExp(category, 'i')] };
+    }
+
+    // Filter by location (if we add location field later)
+    if (location && location !== 'all') {
+      // This would need a location field in the model
+      // query.location = { $regex: location, $options: 'i' };
+    }
+
+    // Sorting
+    let sortOptions = {};
+    switch (sortBy) {
+      case 'company':
+        sortOptions.company = sortOrder === 'desc' ? -1 : 1;
+        break;
+      case 'createdAt':
+        sortOptions.createdAt = sortOrder === 'desc' ? -1 : 1;
+        break;
+      default:
+        sortOptions.company = 1;
+    }
+
+    const exhibitors = await Exhibitor.find(query)
+      .populate('user')
+      .sort(sortOptions);
+
+    // Get unique products for filter options
+    const allExhibitors = await Exhibitor.find({ status: 'approved' }, 'products');
+    const allProducts = allExhibitors.flatMap(exhibitor => exhibitor.products || []);
+    const uniqueProducts = [...new Set(allProducts.filter(Boolean))];
+
+    res.json({
+      exhibitors,
+      filterOptions: {
+        products: uniqueProducts
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

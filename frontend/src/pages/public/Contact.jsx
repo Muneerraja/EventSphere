@@ -1,6 +1,7 @@
 import { motion } from 'framer-motion';
 import { useState } from 'react';
 import { Mail, Phone, MapPin, Send, CheckCircle } from 'lucide-react';
+import axios from 'axios';
 import { useSettings } from '../../contexts/SettingsContext';
 
 const Contact = () => {
@@ -24,15 +25,18 @@ const Contact = () => {
     e.preventDefault();
     setIsSubmitting(true);
 
-    // Simulate form submission
-    await new Promise(resolve => setTimeout(resolve, 2000));
-
-    setIsSubmitting(false);
-    setIsSubmitted(true);
-    setFormData({ name: '', email: '', subject: '', message: '' });
-
-    // Reset success state after 5 seconds
-    setTimeout(() => setIsSubmitted(false), 5000);
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/contact`, formData);
+      setIsSubmitted(true);
+      setFormData({ name: '', email: '', subject: '', message: '' });
+      // Reset success state after 5 seconds
+      setTimeout(() => setIsSubmitted(false), 5000);
+    } catch (error) {
+      console.error('Error submitting contact form:', error);
+      alert('Failed to send message. Please try again.');
+    } finally {
+      setIsSubmitting(false);
+    }
   };
 
   const handleChange = (e) => {

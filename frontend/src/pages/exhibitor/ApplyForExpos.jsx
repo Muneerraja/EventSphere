@@ -9,9 +9,10 @@ const ApplyForExpos = () => {
   const [selectedExpo, setSelectedExpo] = useState(null);
   const [formData, setFormData] = useState({
     company: '',
-    products: '',
+    products: [],
     description: ''
   });
+  const [selectedProducts, setSelectedProducts] = useState([]);
   const [logo, setLogo] = useState(null);
   const [applying, setApplying] = useState(false);
 
@@ -43,6 +44,20 @@ const ApplyForExpos = () => {
     setLogo(e.target.files[0]);
   };
 
+  const toggleProduct = (product) => {
+    setSelectedProducts(prev =>
+      prev.includes(product)
+        ? prev.filter(p => p !== product)
+        : [...prev, product]
+    );
+    setFormData(prev => ({
+      ...prev,
+      products: prev.products.includes(product)
+        ? prev.products.filter(p => p !== product)
+        : [...prev.products, product]
+    }));
+  };
+
   const handleApply = async (e) => {
     e.preventDefault();
     setApplying(true);
@@ -52,13 +67,14 @@ const ApplyForExpos = () => {
         type: 'exhibitor',
         expoId: selectedExpo._id,
         company: formData.company,
-        products: formData.products.split(',').map(p => p.trim()),
+        products: formData.products,
         description: formData.description
       });
 
       alert('Application submitted successfully!');
       setSelectedExpo(null);
-      setFormData({ company: '', products: '', description: '' });
+      setFormData({ company: '', products: [], description: '' });
+      setSelectedProducts([]);
       setLogo(null);
     } catch (error) {
       console.error('Error submitting application:', error);
@@ -137,15 +153,47 @@ const ApplyForExpos = () => {
 
               <div>
                 <label className="block text-sm font-medium text-gray-700 mb-1">Products/Services</label>
-                <input
-                  type="text"
-                  name="products"
-                  value={formData.products}
-                  onChange={handleInputChange}
-                  placeholder="Comma separated list"
-                  required
-                  className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500"
-                />
+                <div className="relative">
+                  <select
+                    multiple
+                    value={selectedProducts}
+                    onChange={(e) => {
+                      const selected = Array.from(e.target.selectedOptions, option => option.value);
+                      setSelectedProducts(selected);
+                      setFormData(prev => ({ ...prev, products: selected }));
+                    }}
+                    className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-2 focus:ring-blue-500 min-h-[100px]"
+                    required
+                  >
+                    {['Technology', 'Healthcare', 'Finance', 'Education', 'Manufacturing', 'Retail'].map(product => (
+                      <option key={product} value={product}>{product}</option>
+                    ))}
+                  </select>
+                  <p className="text-xs text-gray-500 mt-1">
+                    Hold Ctrl/Cmd to select multiple products (or click individual items below)
+                  </p>
+                </div>
+
+                {/* Selected products display */}
+                {selectedProducts.length > 0 && (
+                  <div className="mt-2 flex flex-wrap gap-1">
+                    {selectedProducts.map(product => (
+                      <span
+                        key={product}
+                        className="inline-flex items-center px-2 py-1 bg-blue-100 text-blue-800 text-xs rounded-full"
+                      >
+                        {product}
+                        <button
+                          type="button"
+                          onClick={() => toggleProduct(product)}
+                          className="ml-1 text-blue-600 hover:text-blue-800"
+                        >
+                          ×
+                        </button>
+                      </span>
+                    ))}
+                  </div>
+                )}
               </div>
 
               <div>

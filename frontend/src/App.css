@@ -1,1 +1,46 @@
 @import "tailwindcss";
+
+/* Dynamic theme support */
+:root {
+  --primary-color: #2563EB;
+}
+
+/* Light theme (default) */
+.theme-light {
+  --bg-primary: #ffffff;
+  --bg-secondary: #f9fafb;
+  --text-primary: #111827;
+  --text-secondary: #6b7280;
+  --border-color: #e5e7eb;
+}
+
+/* Dark theme */
+.theme-dark {
+  --bg-primary: #1f2937;
+  --bg-secondary: #374151;
+  --text-primary: #f9fafb;
+  --text-secondary: #d1d5db;
+  --border-color: #4b5563;
+}
+
+/* Auto theme - will use system preference */
+.theme-auto {
+  /* CSS will handle this automatically based on prefers-color-scheme */
+}
+
+@media (prefers-color-scheme: dark) {
+  .theme-auto {
+    --bg-primary: #1f2937;
+    --bg-secondary: #374151;
+    --text-primary: #f9fafb;
+    --text-secondary: #d1d5db;
+    --border-color: #4b5563;
+  }
+}
+
+/* Apply theme variables */
+body {
+  background-color: var(--bg-primary);
+  color: var(--text-primary);
+  transition: background-color 0.3s ease, color 0.3s ease;
+}

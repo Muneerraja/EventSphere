@@ -1,5 +1,7 @@
 import React, { createContext, useContext, useState, useEffect } from 'react';
 import axios from 'axios';
+import { useSocket } from './SocketContext';
+import { useAuth } from './AuthContext';
 
 const SettingsContext = createContext();
 
@@ -12,9 +14,11 @@ export const useSettings = () => {
 };
 
 export const SettingsProvider = ({ children }) => {
+  const { socket } = useSocket() || {};
+  const { isAuthenticated } = useAuth();
   const [settings, setSettings] = useState({
     general: {
-      siteName: 'EventSphere',
+      siteTitle: 'EventSphere',
       contactEmail: 'info@eventsphere.com',
       supportPhone: '+1 (555) 123-4567',
       siteDescription: 'Professional event management platform for organizers, exhibitors, and attendees.',
@@ -25,8 +29,25 @@ export const SettingsProvider = ({ children }) => {
   const [loading, setLoading] = useState(true);
 
   useEffect(() => {
-    fetchSettings();
-  }, []);
+    if (isAuthenticated) {
+      fetchSettings();
+    } else {
+      setLoading(false); // Don't try to fetch if not authenticated
+    }
+  }, [isAuthenticated]);
+
+  // Real-time settings synchronization
+  useEffect(() => {
+    if (socket && isAuthenticated) {
+      socket.on('settingsUpdated', (updatedSettings) => {
+        setSettings(updatedSettings);
+      });
+
+      return () => {
+        socket.off('settingsUpdated');
+      };
+    }
+  }, [socket, isAuthenticated]);
 
   const fetchSettings = async () => {
     try {

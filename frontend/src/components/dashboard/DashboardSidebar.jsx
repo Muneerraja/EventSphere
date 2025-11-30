@@ -39,32 +39,36 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       // Shared Features
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+      { path: '/dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
     ],
     organizer: [
       // Admin/Organizer Dashboard - Core Management
       { path: '/dashboard', icon: Activity, label: 'Dashboard' },
 
-      // Expo Management
+      // Expo Management (Admin/Organizer)
+      { path: '/dashboard/admin/expos', icon: Calendar, label: 'All Expos' },
       { path: '/dashboard/organizer/my-expos', icon: Calendar, label: 'My Expos' },
       { path: '/dashboard/organizer/create-expo', icon: Calendar, label: 'Create Expo' },
 
-      // Exhibitor Management
+      // Exhibitor Management (Admin/Organizer)
+      { path: '/dashboard/admin/approvals', icon: BookOpen, label: 'All Approvals' },
       { path: '/dashboard/organizer/exhibitor-approvals', icon: BookOpen, label: 'Exhibitor Approvals' },
       { path: '/dashboard/organizer/booths', icon: Building, label: 'Booth Management' },
 
-      // Schedule Management
+      // Schedule Management (Admin/Organizer)
+      { path: '/dashboard/admin/sessions', icon: Clock, label: 'All Sessions' },
       { path: '/dashboard/organizer/sessions', icon: Clock, label: 'Session Management' },
 
-      // Attendee Management
+      // Attendee Management (Admin/Organizer)
       { path: '/dashboard/organizer/attendees', icon: Users, label: 'Attendee Management' },
 
-      // Analytics & Reporting
+      // Analytics & Reporting (Admin/Organizer)
       { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
 
       // Shared Features
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
-      { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
+      { path: '/dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
     ],
     exhibitor: [
       // Exhibitor Portal Dashboard
@@ -80,12 +84,8 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
 
-      // Analytics
-      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-
       // Account Settings
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
-      { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
     ],
     attendee: [
       // Attendee Interface Dashboard
@@ -104,12 +104,8 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
 
-      // Analytics
-      { path: '/dashboard/analytics', icon: BarChart3, label: 'Analytics' },
-
       // Account Settings
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
-      { path: '/dashboard/settings', icon: Settings, label: 'Settings' },
     ]
   };
 

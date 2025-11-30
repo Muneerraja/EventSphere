@@ -3,10 +3,12 @@ import { useState } from 'react';
 import { Link, useNavigate } from 'react-router-dom';
 import { LogIn, UserPlus, Eye, EyeOff, User, Mail, Lock, CheckCircle, ArrowLeft } from 'lucide-react';
 import { useAuth } from '../../contexts/AuthContext';
+import { useSettings } from '../../contexts/SettingsContext';
 import axios from 'axios';
 
 const Auth = () => {
   const { login, register, forgotPassword, loading, error } = useAuth();
+  const { settings } = useSettings();
   const navigate = useNavigate();
   const [isLogin, setIsLogin] = useState(true);
   const [showPassword, setShowPassword] = useState(false);
@@ -224,19 +226,21 @@ const Auth = () => {
               <LogIn size={20} />
               <span>Login</span>
             </motion.button>
-            <motion.button
-              variants={tabVariants}
-              animate={!isLogin ? 'active' : 'inactive'}
-              onClick={() => {
-                setIsLogin(false);
-                setRegisterSuccess(false);
-                setFormData({ ...formData, password: '' });
-              }}
-              className="flex-1 py-4 px-6 transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
-            >
-              <UserPlus size={20} />
-              <span>Register</span>
-            </motion.button>
+            {settings?.features?.allowSelfRegistration && (
+              <motion.button
+                variants={tabVariants}
+                animate={!isLogin ? 'active' : 'inactive'}
+                onClick={() => {
+                  setIsLogin(false);
+                  setRegisterSuccess(false);
+                  setFormData({ ...formData, password: '' });
+                }}
+                className="flex-1 py-4 px-6 transition-colors duration-200 font-medium flex items-center justify-center space-x-2"
+              >
+                <UserPlus size={20} />
+                <span>Register</span>
+              </motion.button>
+            )}
           </div>
 
           {/* Form Container */}

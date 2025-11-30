@@ -214,3 +214,19 @@ exports.getBooth = async (req, res) => {
     res.status(500).json({ error: error.message });
   }
 };
+
+exports.getBoothsByExhibitor = async (req, res) => {
+  try {
+    const { exhibitorId } = req.params;
+
+    // Find all booths assigned to this exhibitor
+    const booths = await Booth.find({
+      exhibitor: exhibitorId,
+      status: 'assigned'
+    }).populate('expo');
+
+    res.json(booths);
+  } catch (error) {
+    res.status(500).json({ error: error.message });
+  }
+};

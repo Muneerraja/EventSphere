@@ -5,6 +5,7 @@ const attendeeSchema = new mongoose.Schema({
   registeredExpos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Expo' }],
   registeredSessions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }],
   bookmarkedSessions: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Session' }],
+  bookmarkedExpos: [{ type: mongoose.Schema.Types.ObjectId, ref: 'Expo' }],
   createdAt: { type: Date, default: Date.now }
 });
 

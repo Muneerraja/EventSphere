@@ -590,11 +590,10 @@ const SessionManagement = () => {
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option>Keynote</option>
-                    <option>Workshop</option>
-                    <option>Panel Discussion</option>
-                    <option>Breakout Session</option>
-                    <option>Networking</option>
+                    <option value="">Select a category...</option>
+                    {['Keynote', 'Workshop', 'Panel', 'Breakout', 'Networking', 'General'].map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
                   </select>
                 </div>
               </div>
@@ -764,11 +763,10 @@ const SessionManagement = () => {
                     onChange={(e) => setFormData({...formData, category: e.target.value})}
                     className="w-full px-3 py-2 border border-gray-300 rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
                   >
-                    <option>Keynote</option>
-                    <option>Workshop</option>
-                    <option>Panel Discussion</option>
-                    <option>Breakout Session</option>
-                    <option>Networking</option>
+                    <option value="">Select a category...</option>
+                    {['Keynote', 'Workshop', 'Panel', 'Breakout', 'Networking', 'General'].map(category => (
+                      <option key={category} value={category}>{category}</option>
+                    ))}
                   </select>
                 </div>
               </div>

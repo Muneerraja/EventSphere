@@ -170,8 +170,77 @@ exports.getBoothAvailability = async (req, res) => {
 
 exports.getPublicExpos = async (req, res) => {
   try {
-    const expos = await Expo.find().populate('organizer');
-    res.json(expos);
+    const {
+      search,
+      theme,
+      location,
+      dateFrom,
+      dateTo,
+      sortBy = 'date',
+      sortOrder = 'asc'
+    } = req.query;
+
+    let query = {};
+
+    // Search functionality
+    if (search) {
+      query.$or = [
+        { title: { $regex: search, $options: 'i' } },
+        { description: { $regex: search, $options: 'i' } },
+        { location: { $regex: search, $options: 'i' } },
+        { theme: { $regex: search, $options: 'i' } }
+      ];
+    }
+
+    // Filter by theme
+    if (theme && theme !== 'all') {
+      query.theme = { $regex: theme, $options: 'i' };
+    }
+
+    // Filter by location
+    if (location && location !== 'all') {
+      query.location = { $regex: location, $options: 'i' };
+    }
+
+    // Date range filtering
+    if (dateFrom || dateTo) {
+      query.date = {};
+      if (dateFrom) query.date.$gte = new Date(dateFrom);
+      if (dateTo) query.date.$lte = new Date(dateTo);
+    }
+
+    // Sorting
+    let sortOptions = {};
+    switch (sortBy) {
+      case 'date':
+        sortOptions.date = sortOrder === 'desc' ? -1 : 1;
+        break;
+      case 'title':
+        sortOptions.title = sortOrder === 'desc' ? -1 : 1;
+        break;
+      case 'location':
+        sortOptions.location = sortOrder === 'desc' ? -1 : 1;
+        break;
+      default:
+        sortOptions.date = 1;
+    }
+
+    const expos = await Expo.find(query)
+      .populate('organizer')
+      .sort(sortOptions);
+
+    // Get unique themes and locations for filter options
+    const allExpos = await Expo.find({}, 'theme location');
+    const themes = [...new Set(allExpos.map(expo => expo.theme).filter(Boolean))];
+    const locations = [...new Set(allExpos.map(expo => expo.location).filter(Boolean))];
+
+    res.json({
+      expos,
+      filterOptions: {
+        themes,
+        locations
+      }
+    });
   } catch (error) {
     res.status(500).json({ error: error.message });
   }

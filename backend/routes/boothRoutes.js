@@ -10,5 +10,6 @@ router.put('/:id', authenticate, boothController.updateBooth);
 router.delete('/:id', authenticate, boothController.deleteBooth);
 router.get('/', authenticate, boothController.getBooths);
 router.get('/:id', authenticate, boothController.getBooth);
+router.get('/exhibitor/:exhibitorId', authenticate, boothController.getBoothsByExhibitor);
 
 module.exports = router;

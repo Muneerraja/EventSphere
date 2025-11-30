@@ -14,5 +14,6 @@ router.post('/:id/materials', authenticate, upload.array('materials'), sessionCo
 router.get('/', authenticate, sessionController.getSessions);
 router.get('/:id', authenticate, sessionController.getSession);
 router.get('/public/by-expo/:expoId', sessionController.getPublicSessionsByExpo);
+router.get('/public/:id', sessionController.getPublicSession);
 
 module.exports = router;

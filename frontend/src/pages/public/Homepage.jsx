@@ -1,5 +1,7 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
+import { useState, useEffect } from "react";
+import axios from "axios";
 import {
   ArrowRight,
   Users,
@@ -9,9 +11,35 @@ import {
   MessageCircle,
   Shield,
   ChevronDown,
+  MapPin,
+  Eye,
 } from "lucide-react";
 
 const Homepage = () => {
+  const [featuredExpos, setFeaturedExpos] = useState([]);
+  const [loading, setLoading] = useState(true);
+
+  useEffect(() => {
+    fetchFeaturedExpos();
+  }, []);
+
+  const fetchFeaturedExpos = async () => {
+    try {
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/expos/public/expos`);
+      // Get the first 3 upcoming expos as featured
+      const expos = response.data.expos || response.data || [];
+      const upcoming = expos
+        .filter(expo => new Date(expo.date) >= new Date())
+        .sort((a, b) => new Date(a.date) - new Date(b.date))
+        .slice(0, 3);
+      setFeaturedExpos(upcoming);
+    } catch (error) {
+      console.error('Error fetching featured expos:', error);
+    } finally {
+      setLoading(false);
+    }
+  };
+
   const fadeInUp = {
     initial: { opacity: 0, y: 60 },
     animate: { opacity: 1, y: 0 },
@@ -173,6 +201,123 @@ const Homepage = () => {
                 </motion.div>
               );
             })}
+          </motion.div>
+        </div>
+      </section>
+
+      {/* Featured Expos Section */}
+      <section className="py-20 bg-gray-50">
+        <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
+          <motion.div
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            className="text-center mb-16"
+          >
+            <h2 className="text-3xl md:text-4xl font-bold text-gray-900 mb-4">
+              Upcoming Featured Events
+            </h2>
+            <p className="text-xl text-gray-600 max-w-2xl mx-auto">
+              Discover the most exciting upcoming expos and be part of the innovation
+            </p>
+          </motion.div>
+
+          {loading ? (
+            <div className="flex justify-center">
+              <motion.div
+                animate={{ rotate: 360 }}
+                transition={{ duration: 1, repeat: Infinity, ease: "linear" }}
+                className="w-12 h-12 border-4 border-blue-600 border-t-transparent rounded-full"
+              />
+            </div>
+          ) : featuredExpos.length > 0 ? (
+            <motion.div
+              variants={stagger}
+              initial="initial"
+              animate="animate"
+              className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-8"
+            >
+              {featuredExpos.map((expo) => (
+                <motion.div
+                  key={expo._id}
+                  variants={fadeInUp}
+                  whileHover={{ y: -5 }}
+                  className="bg-white rounded-xl shadow-lg overflow-hidden hover:shadow-xl transition-shadow"
+                >
+                  <div className="p-8">
+                    <div className="flex items-center justify-between mb-4">
+                      <span className="px-3 py-1 bg-blue-100 text-blue-600 rounded-full text-sm font-medium">
+                        {expo.theme}
+                      </span>
+                      <div className="flex items-center text-gray-500 text-sm">
+                        <Eye size={16} className="mr-1" />
+                        Featured
+                      </div>
+                    </div>
+
+                    <h3 className="text-xl font-bold text-gray-900 mb-3 line-clamp-2">
+                      {expo.title}
+                    </h3>
+
+                    <p className="text-gray-600 text-sm leading-relaxed mb-6 line-clamp-3">
+                      {expo.description}
+                    </p>
+
+                    <div className="space-y-3 mb-6">
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <Calendar size={16} className="mr-2 text-blue-600" />
+                        {new Date(expo.date).toLocaleDateString('en-US', {
+                          weekday: 'long',
+                          year: 'numeric',
+                          month: 'long',
+                          day: 'numeric'
+                        })}
+                      </div>
+                      <div className="flex items-center text-gray-600 text-sm">
+                        <MapPin size={16} className="mr-2 text-green-600" />
+                        {expo.location}
+                      </div>
+                    </div>
+
+                    <motion.div
+                      whileHover={{ scale: 1.02 }}
+                      whileTap={{ scale: 0.98 }}
+                    >
+                      <Link
+                        to={`/expos/${expo._id}`}
+                        className="block w-full bg-blue-600 hover:bg-blue-700 text-white text-center py-3 rounded-lg font-semibold transition-colors"
+                      >
+                        View Details
+                      </Link>
+                    </motion.div>
+                  </div>
+                </motion.div>
+              ))}
+            </motion.div>
+          ) : (
+            <motion.div
+              variants={fadeInUp}
+              className="text-center py-20"
+            >
+              <Calendar size={64} className="mx-auto text-gray-400 mb-6" />
+              <h3 className="text-2xl font-semibold text-gray-600 mb-2">No upcoming events</h3>
+              <p className="text-gray-500">Check back soon for exciting new expos!</p>
+            </motion.div>
+          )}
+
+          <motion.div
+            variants={fadeInUp}
+            initial="initial"
+            animate="animate"
+            className="text-center mt-12"
+          >
+            <Link
+              to="/expos"
+              className="inline-flex items-center space-x-2 bg-blue-600 hover:bg-blue-700 text-white px-8 py-4 rounded-lg font-semibold transition-colors"
+            >
+              <span>View All Expos</span>
+              <ArrowRight size={20} />
+            </Link>
           </motion.div>
         </div>
       </section>

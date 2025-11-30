@@ -2,65 +2,48 @@
 // In production, this would use a database
 let systemSettings = {
   general: {
-    siteName: 'EventSphere',
+    siteTitle: 'EventSphere',
     siteDescription: 'Professional event management platform for organizers, exhibitors, and attendees.',
     contactEmail: 'info@eventsphere.com',
     supportPhone: '+1 (555) 123-4567',
     timezone: 'Asia/Karachi',
-    maintenanceMode: false,
-    registrationEnabled: true
-  },
-  email: {
-    smtp: {
-      host: process.env.MAIL_HOST || 'smtp.gmail.com',
-      port: process.env.MAIL_PORT || 587,
-      secure: false,
-      user: process.env.MAIL_USER,
-      password: process.env.MAIL_PASS ? '******' : '' // Mask password
-    },
-    fromName: 'EventSphere',
-    fromEmail: process.env.MAIL_USER,
-    notificationTemplates: {
-      welcome: true,
-      eventReminder: true,
-      applicationApproved: true,
-      applicationRejected: true
-    }
-  },
-  scheduling: {
-    defaultExpoDuration: 8, // hours
-    minAdvanceBooking: 24, // hours
-    maxAdvanceBooking: 365, // days
-    calendarSyncEnabled: true,
-    timeZone: 'UTC'
+    maintenanceMode: false
   },
   security: {
-    sessionTimeout: 24, // hours
+    sessionTimeout: 30,
     passwordMinLength: 8,
-    twoFactorRequired: false,
     maxLoginAttempts: 5,
-    lockoutDuration: 30 // minutes
+    lockoutDuration: 15,
+    requireTwoFactor: false,
+    enableCaptcha: true
   },
-  payments: {
-    currency: 'USD',
-    paymentGateway: 'stripe',
-    commissionRate: 5, // percentage
-    transactionFee: 2.99,
-    refundsEnabled: true
+  email: {
+    smtpHost: process.env.MAIL_HOST || 'smtp.gmail.com',
+    smtpPort: process.env.MAIL_PORT || 587,
+    smtpUsername: process.env.MAIL_USER || '',
+    fromEmail: process.env.MAIL_USER || '',
+    fromName: 'EventSphere',
+    smtpUseTLS: true
   },
-  limits: {
-    maxExposPerOrganizer: 50,
-    maxSessionsPerExpo: 20,
-    maxBoothsPerExhibitor: 5,
-    maxAttendeesPerExpo: 1000,
-    fileUploadSizeLimit: 50 // MB
+  database: {
+    backupFrequency: 'daily',
+    maxConnections: 100,
+    queryTimeout: 30,
+    logQueries: false
   },
-  notifications: {
-    emailEnabled: true,
-    pushEnabled: false,
-    reminderAdvanceTime: 24, // hours
-    marketingEmails: false,
-    systemAlerts: true
+  appearance: {
+    theme: 'light',
+    primaryColor: '#2563EB',
+    logoUrl: '',
+    faviconUrl: ''
+  },
+  features: {
+    allowSelfRegistration: true,
+    requireEmailVerification: true,
+    enableNotifications: true,
+    enableAnalytics: true,
+    maxEventsPerUser: 10,
+    maxSessionsPerEvent: 20
   },
   updatedAt: new Date(),
   updatedBy: 'admin'
@@ -96,32 +79,29 @@ exports.updateSettings = async (req, res) => {
     if (updates.general) {
       systemSettings.general = { ...systemSettings.general, ...updates.general };
     }
-    if (updates.email) {
-      // Handle password update securely
-      if (updates.email.smtp?.password && updates.email.smtp.password !== '******') {
-        systemSettings.email.smtp.password = updates.email.smtp.password;
-        // In production, you'd hash/store this securely
-      }
-      systemSettings.email = { ...systemSettings.email, ...updates.email };
-    }
-    if (updates.scheduling) {
-      systemSettings.scheduling = { ...systemSettings.scheduling, ...updates.scheduling };
-    }
     if (updates.security) {
       systemSettings.security = { ...systemSettings.security, ...updates.security };
     }
-    if (updates.payments) {
-      systemSettings.payments = { ...systemSettings.payments, ...updates.payments };
+    if (updates.email) {
+      systemSettings.email = { ...systemSettings.email, ...updates.email };
     }
-    if (updates.limits) {
-      systemSettings.limits = { ...systemSettings.limits, ...updates.limits };
+    if (updates.database) {
+      systemSettings.database = { ...systemSettings.database, ...updates.database };
     }
-    if (updates.notifications) {
-      systemSettings.notifications = { ...systemSettings.notifications, ...updates.notifications };
+    if (updates.appearance) {
+      systemSettings.appearance = { ...systemSettings.appearance, ...updates.appearance };
+    }
+    if (updates.features) {
+      systemSettings.features = { ...systemSettings.features, ...updates.features };
     }
 
     systemSettings.updatedAt = new Date();
     systemSettings.updatedBy = req.user.id;
+
+    // Emit real-time settings update to all connected users
+    if (global.emitToAll) {
+      global.emitToAll('settingsUpdated', systemSettings);
+    }
 
     res.json({
       ...systemSettings,

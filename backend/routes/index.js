@@ -13,5 +13,7 @@ router.use('/settings', require('./settingsRoutes'));
 router.use('/notifications', require('./notificationRoutes'));
 router.use('/messages', require('./messageRoutes'));
 router.use('/feedbacks', require('./feedbackRoutes'));
+router.use('/appointments', require('./appointmentRoutes'));
+router.use('/contact', require('./contactRoutes'));
 
 module.exports = router;

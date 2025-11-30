@@ -1,14 +1,16 @@
 import { motion } from "framer-motion";
 import { Link } from "react-router-dom";
-import { Menu, X, Calendar, Home, Info, Mail, LogIn, LayoutDashboard, Search } from "lucide-react";
-import { useState } from "react";
+import { Menu, X, Calendar, Home, Info, Mail, LogIn, LayoutDashboard, Search, Heart, MessageSquare, Calendar as CalendarIcon, ChevronDown, User, Settings } from "lucide-react";
+import { useState, useEffect, useRef } from "react";
 import { useAuth } from "../../contexts/AuthContext";
 import { useSettings } from "../../contexts/SettingsContext";
 
 const Header = () => {
   const [isOpen, setIsOpen] = useState(false);
-  const { isAuthenticated } = useAuth();
+  const [isUserMenuOpen, setIsUserMenuOpen] = useState(false);
+  const { isAuthenticated, user } = useAuth();
   const { settings } = useSettings();
+  const dropdownRef = useRef(null);
 
   const navItems = [
     { path: "/", label: "Home", icon: Home },
@@ -17,6 +19,20 @@ const Header = () => {
     { path: "/exhibitors", label: "Exhibitors", icon: Search },
     { path: "/contact", label: "Contact", icon: Mail },
   ];
+
+  // Close dropdown when clicking outside
+  useEffect(() => {
+    const handleClickOutside = (event) => {
+      if (dropdownRef.current && !dropdownRef.current.contains(event.target)) {
+        setIsUserMenuOpen(false);
+      }
+    };
+
+    document.addEventListener('mousedown', handleClickOutside);
+    return () => {
+      document.removeEventListener('mousedown', handleClickOutside);
+    };
+  }, []);
 
   return (
     <motion.header
@@ -57,15 +73,76 @@ const Header = () => {
                 </motion.div>
               );
             })}
-            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }}>
+            <motion.div whileHover={{ scale: 1.05 }} whileTap={{ scale: 0.95 }} className="relative">
               {isAuthenticated ? (
-                <Link
-                  to="/dashboard"
-                  className="flex items-center space-x-1 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
-                >
-                  <LayoutDashboard size={18} />
-                  <span>Dashboard</span>
-                </Link>
+                <div className="relative" ref={dropdownRef}>
+                  <button
+                    onClick={() => setIsUserMenuOpen(!isUserMenuOpen)}
+                    className="flex items-center space-x-2 bg-blue-600 text-white px-4 py-2 rounded-lg hover:bg-blue-700 transition-colors"
+                  >
+                    <User size={18} />
+                    <span>{user?.username || 'User'}</span>
+                    <ChevronDown size={16} className={`transition-transform ${isUserMenuOpen ? 'rotate-180' : ''}`} />
+                  </button>
+
+                  {isUserMenuOpen && (
+                    <motion.div
+                      initial={{ opacity: 0, y: -10 }}
+                      animate={{ opacity: 1, y: 0 }}
+                      className="absolute right-0 mt-2 w-56 bg-white rounded-lg shadow-lg border border-gray-200 py-2 z-50"
+                    >
+                      <Link
+                        to="/dashboard/attendee/my-events"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Heart size={16} />
+                        <span>My Events</span>
+                      </Link>
+                      <Link
+                        to="/dashboard/attendee/appointments"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <CalendarIcon size={16} />
+                        <span>My Appointments</span>
+                      </Link>
+                      <Link
+                        to="/dashboard/messages"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <MessageSquare size={16} />
+                        <span>Messages</span>
+                      </Link>
+                      <Link
+                        to="/dashboard/attendee/feedback"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <MessageSquare size={16} />
+                        <span>Give Feedback</span>
+                      </Link>
+                      <div className="border-t border-gray-200 my-2"></div>
+                      <Link
+                        to="/dashboard"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <LayoutDashboard size={16} />
+                        <span>Dashboard</span>
+                      </Link>
+                      <Link
+                        to="/settings"
+                        className="flex items-center space-x-2 px-4 py-2 text-gray-700 hover:bg-gray-100 transition-colors"
+                        onClick={() => setIsUserMenuOpen(false)}
+                      >
+                        <Settings size={16} />
+                        <span>Settings</span>
+                      </Link>
+                    </motion.div>
+                  )}
+                </div>
               ) : (
                 <Link
                   to="/auth"

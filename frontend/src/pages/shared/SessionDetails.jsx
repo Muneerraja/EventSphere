@@ -21,6 +21,7 @@ import { useAuth } from '../../contexts/AuthContext.jsx';
 
 const SessionDetails = () => {
   const { id } = useParams();
+  const { user } = useAuth();
   const [session, setSession] = useState(null);
   const [expo, setExpo] = useState(null);
   const [isRegistered, setIsRegistered] = useState(false);
@@ -37,9 +38,22 @@ const SessionDetails = () => {
 
   const fetchSessionDetails = async () => {
     try {
-      const response = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/${id}/`);
-      setSession(response.data);
-      // TODO: Set expo from response.data.expoData
+      const response = await axios.get(`${import.meta.env.VITE_API_URL}/sessions/public/${id}`);
+      const sessionData = response.data;
+      setSession(sessionData);
+      setExpo(sessionData.expo);
+
+      // Check if user is registered for this session's expo and if session is bookmarked
+      if (user) {
+        try {
+          const attendeeResponse = await axios.get(`${import.meta.env.VITE_API_URL}/attendees/public/profile/${user._id}`);
+          const attendeeData = attendeeResponse.data;
+          setIsRegistered(attendeeData.registeredExpos?.some(expo => expo._id === sessionData.expo._id) || false);
+          setIsBookmarked(attendeeData.bookmarkedSessions?.some(session => session._id === id) || false);
+        } catch (attendeeError) {
+          console.error('Error fetching attendee data:', attendeeError);
+        }
+      }
     } catch (error) {
       console.error('Error fetching session details:', error);
       setSession(null);
@@ -82,13 +96,39 @@ const SessionDetails = () => {
     }
   };
 
-  const handleBookmark = () => {
-    setIsBookmarked(!isBookmarked);
+  const handleBookmark = async () => {
+    try {
+      if (isBookmarked) {
+        // Unbookmark
+        await axios.delete(`${import.meta.env.VITE_API_URL}/attendees/unbookmark-session/${id}`);
+        setIsBookmarked(false);
+      } else {
+        // Bookmark
+        await axios.post(`${import.meta.env.VITE_API_URL}/attendees/bookmark-session`, { sessionId: id });
+        setIsBookmarked(true);
+      }
+    } catch (error) {
+      console.error('Error updating bookmark:', error);
+      alert('Failed to update bookmark. Please try again.');
+    }
   };
 
-  const submitRating = (userRating, comment) => {
-    // Handle rating submission
-    setShowRatingModal(false);
+  const submitRating = async (userRating, comment) => {
+    try {
+      await axios.post(`${import.meta.env.VITE_API_URL}/sessions/${id}/rate`, {
+        score: userRating,
+        comment: comment || ''
+      });
+
+      setShowRatingModal(false);
+      // Refresh session data to show updated ratings
+      fetchSessionDetails();
+
+      alert('Thank you for your rating!');
+    } catch (error) {
+      console.error('Error submitting rating:', error);
+      alert('Failed to submit rating. Please try again.');
+    }
   };
 
   const renderStars = (stars) => {

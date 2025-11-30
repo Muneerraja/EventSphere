@@ -253,22 +253,35 @@ const CreateExpo = () => {
           {/* Location */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Location *</label>
-            <input
-              type="text"
+            <select
               name="location"
               value={formData.location}
               onChange={(e) => {
                 handleInputChange(e);
-                // Clear validation error when user starts typing
+                // Clear validation error when user selects
                 if (validationErrors.location) {
                   setValidationErrors(prev => ({ ...prev, location: '' }));
                 }
               }}
-              placeholder="Enter venue location"
               className={`w-full px-4 py-3 rounded-lg border focus:ring-2 focus:ring-blue-400 focus:outline-none transition-shadow shadow-sm hover:shadow-md ${
                 validationErrors.location ? 'border-red-300' : 'border-gray-300'
               }`}
-            />
+            >
+              <option value="">Select a location...</option>
+              {['New York', 'London', 'Tokyo', 'Singapore', 'Dubai', 'Berlin'].map(location => (
+                <option key={location} value={location}>{location}</option>
+              ))}
+              <option value="other">Other (specify below)</option>
+            </select>
+            {formData.location === 'other' && (
+              <input
+                type="text"
+                name="customLocation"
+                onChange={(e) => setFormData(prev => ({ ...prev, location: e.target.value }))}
+                placeholder="Enter custom location"
+                className="w-full mt-2 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-shadow shadow-sm hover:shadow-md"
+              />
+            )}
             {validationErrors.location && (
               <p className="mt-1 text-sm text-red-600 flex items-center">
                 <AlertTriangle size={14} className="mr-1" />
@@ -280,14 +293,27 @@ const CreateExpo = () => {
           {/* Theme */}
           <div>
             <label className="block text-sm font-medium text-gray-700 mb-2">Theme</label>
-            <input
-              type="text"
+            <select
               name="theme"
               value={formData.theme}
               onChange={handleInputChange}
-              placeholder="Enter expo theme (optional)"
               className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-shadow shadow-sm hover:shadow-md"
-            />
+            >
+              <option value="">Select a theme...</option>
+              {EXPO_THEMES.map(theme => (
+                <option key={theme} value={theme}>{theme}</option>
+              ))}
+              <option value="other">Other (specify below)</option>
+            </select>
+            {formData.theme === 'other' && (
+              <input
+                type="text"
+                name="customTheme"
+                onChange={(e) => setFormData(prev => ({ ...prev, theme: e.target.value }))}
+                placeholder="Enter custom theme"
+                className="w-full mt-2 px-4 py-3 rounded-lg border border-gray-300 focus:ring-2 focus:ring-blue-400 focus:outline-none transition-shadow shadow-sm hover:shadow-md"
+              />
+            )}
           </div>
 
           {/* Description */}
