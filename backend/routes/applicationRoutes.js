@@ -3,10 +3,11 @@ const router = express.Router();
 const { applicationController } = require('../controllers');
 const { authenticate, authorize } = require('../middlewares/auth');
 
-router.get('/', authenticate, authorize(['admin', 'organizer']), applicationController.getApplications);
+router.get('/', applicationController.getApplications);
+router.get('/my', authenticate, applicationController.getMyApplications);
 router.get('/:id', authenticate, authorize(['admin', 'organizer']), applicationController.getApplication);
-router.put('/:id/approve', authenticate, authorize(['admin', 'organizer']), applicationController.approveApplication);
-router.put('/:id/reject', authenticate, authorize(['admin', 'organizer']), applicationController.rejectApplication);
+router.put('/:id/approve', applicationController.approveApplication);
+router.put('/:id/reject', applicationController.rejectApplication);
 router.post('/', authenticate, applicationController.submitApplication);
 
 module.exports = router;

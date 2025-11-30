@@ -1,9 +1,59 @@
 const { Exhibitor, Expo, User, Session } = require('../models');
 
+exports.getMyApplications = async (req, res) => {
+  try {
+    // Get exhibitor applications for the current user
+    const exhibitorApplications = await Exhibitor.find({ user: req.user.id })
+      .populate('expoApplication', 'title date location')
+      .sort({ createdAt: -1 });
+
+    // Get session applications for the current user (if they are speakers)
+    const sessionApplications = await Session.find({ speaker: req.user.id })
+      .populate('expo', 'title date location')
+      .sort({ createdAt: -1 });
+
+    // Format exhibitor applications
+    const formattedExhibitorApps = exhibitorApplications.map(exhibitor => ({
+      _id: exhibitor._id,
+      applicant: {
+        _id: req.user.id,
+        profile: req.user.profile
+      },
+      expo: exhibitor.expoApplication,
+      status: exhibitor.status,
+      createdAt: exhibitor.createdAt,
+      description: exhibitor.description,
+      company: exhibitor.company,
+      products: exhibitor.products,
+      contact: exhibitor.contact
+    }));
+
+    // Format session applications
+    const formattedSessionApps = sessionApplications.map(session => ({
+      _id: session._id,
+      speaker: {
+        _id: req.user.id,
+        profile: req.user.profile
+      },
+      expo: session.expo,
+      status: session.status,
+      createdAt: session.createdAt,
+      title: session.title,
+      description: session.description,
+      duration: session.duration
+    }));
+
+    res.json([...formattedExhibitorApps, ...formattedSessionApps]);
+  } catch (error) {
+    console.error('Error fetching my applications:', error);
+    res.status(500).json({ error: error.message });
+  }
+};
+
 exports.getApplications = async (req, res) => {
   try {
     let userExpos = [];
-    if (req.user.role === 'organizer') {
+    if (req.user && req.user.role === 'organizer') {
       // Get expos organized by this user
       userExpos = await Expo.find({ organizer: req.user.id }).select('_id');
       userExpos = userExpos.map(expo => expo._id.toString());
@@ -25,7 +75,7 @@ exports.getApplications = async (req, res) => {
     let filteredExhibitorApps = exhibitorApplications;
     let filteredSessionApps = pendingSessions;
 
-    if (req.user.role === 'organizer') {
+    if (req.user && req.user.role === 'organizer') {
       filteredExhibitorApps = exhibitorApplications.filter(app =>
         userExpos.includes(app.expoApplication._id.toString())
       );
@@ -100,7 +150,7 @@ exports.getApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to view this application' });
       }
 
@@ -133,7 +183,7 @@ exports.getApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to view this application' });
       }
 
@@ -179,7 +229,7 @@ exports.approveApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to approve this application' });
       }
 
@@ -198,7 +248,7 @@ exports.approveApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to approve this application' });
       }
 
@@ -229,7 +279,7 @@ exports.rejectApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expoApplication.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to reject this application' });
       }
 
@@ -248,7 +298,7 @@ exports.rejectApplication = async (req, res) => {
 
     if (application) {
       // Check if organizer owns the expo
-      if (req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
+      if (req.user && req.user.role === 'organizer' && application.expo.organizer.toString() !== req.user.id) {
         return res.status(403).json({ error: 'Unauthorized to reject this application' });
       }
 

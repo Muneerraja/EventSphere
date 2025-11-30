@@ -84,6 +84,9 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
       // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
 
+      // Feedback and Support
+      { path: '/dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
+
       // Account Settings
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },
     ],
@@ -103,6 +106,9 @@ const DashboardSidebar = ({ sidebarOpen, setSidebarOpen }) => {
 
       // Communication
       { path: '/dashboard/messages', icon: MessageSquare, label: 'Messages' },
+
+      // Feedback and Support
+      { path: '/dashboard/feedback', icon: MessageSquare, label: 'Feedback' },
 
       // Account Settings
       { path: '/dashboard/accounts', icon: User, label: 'Account Settings' },

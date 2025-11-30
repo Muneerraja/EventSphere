@@ -4,6 +4,29 @@ import { FileImage, Grid3X3, PlusCircle, MinusCircle, Upload, Check, AlertTriang
 import axios from 'axios';
 import { useNavigate } from 'react-router-dom';
 
+const EXPO_THEMES = [
+  'Technology',
+  'Business',
+  'Healthcare',
+  'Education',
+  'Entertainment',
+  'Sports',
+  'Food & Beverage',
+  'Fashion',
+  'Art & Culture',
+  'Science',
+  'Automotive',
+  'Real Estate',
+  'Travel & Tourism',
+  'Finance',
+  'Marketing',
+  'Sustainability',
+  'Gaming',
+  'Music',
+  'Film & Media',
+  'Agriculture'
+];
+
 const CreateExpo = () => {
   const navigate = useNavigate();
   const [formData, setFormData] = useState({

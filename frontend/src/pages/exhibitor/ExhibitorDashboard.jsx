@@ -21,8 +21,8 @@ const ExhibitorDashboard = () => {
   const fetchExhibitorData = async () => {
     try {
       // Fetch applications for this user
-      const applicationsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/applications/`);
-      const userApplications = applicationsResponse.data.filter(app => app.applicant._id === user._id);
+      const applicationsResponse = await axios.get(`${import.meta.env.VITE_API_URL}/applications/my`);
+      const userApplications = applicationsResponse.data;
 
       // Transform applications data
       const applicationsData = userApplications.map(app => ({
